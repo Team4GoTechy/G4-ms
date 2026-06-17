@@ -39,7 +39,7 @@ erDiagram
     }
     ROL_PERMISOS {
         int fk_rol FK
-        int fk_permiso PK FK
+        int fk_permiso PK
     }
     PERMISOS {
         int id PK
