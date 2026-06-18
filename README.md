@@ -1,109 +1,153 @@
-# G4-ms
-Backend del proyecto Pet Store para la capacitación impartida por GoTechy
+# G4-ms - PetStore E-Commerce Backend
+
+Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
+
+## 📋 Descripción del Módulo E-Commerce
+
+Este módulo implementa un sistema de **e-commerce** completo para una tienda de mascotas, con las siguientes funcionalidades:
+
+### Funcionalidades Principales
+
+| Módulo | Descripción |
+|--------|-------------|
+| **Productos** | Gestión de productos con código único, precios, stock y categorías |
+| **Categorías** | Organización de productos por categorías |
+| **Carrito de Compras** | Agregar, modificar y eliminar items del carrito |
+| **Compras** | Proceso completo de compra con validación de stock |
+| **Usuarios** | Sistema de usuarios con roles (CLIENTE, ADMIN) |
+| **Autenticación** | JWT-based authentication |
+
+### Modelo de Datos
 
 ```mermaid
 erDiagram
-    DETALLE_FACTURAS {
-        int id_productos FK
-        int id_factura FK
-        decimal precio_unitario
-        int cantidad
-        datetime fecha_de_creacion
-    }
-    METODO_DE_PAGO {
-        int id PK
-        string nombre_metodo
-        datetime fecha_de_creacion
-    }
-    FACTURAS {
-        int id_factura PK
-        int fk_usuario FK
-        int fk_metodo_pago FK
-        datetime fecha_de_creacion
-    }
     USUARIO {
-        int id PK
-        int fk_rol FK
+        Long id PK
+        Long fk_rol FK
         string nombre
-        string apellido
         string email
         string contrasena
         string direccion
         string telefono
-        datetime fecha_de_creacion
     }
-    ROLES {
-        int id PK
+    ROL {
+        Long id PK
         string nombre
-        datetime fecha_de_creacion
     }
-    ROL_PERMISOS {
-        int fk_rol FK
-        int fk_permiso PK
-    }
-    PERMISOS {
-        int id PK
-        string nombre
-        string descripcion
-        datetime fecha_de_creacion
-    }
-    PRODUCTOS {
-        int id_producto PK
-        int fk_categoria FK
+    PRODUCTO {
+        Long id PK
+        Long fk_categoria FK
         string nombre
         string codigo
         string descripcion
         decimal precio
         int stock
-        datetime fecha_de_creacion
+        boolean activo
     }
     CATEGORIA {
-        int id PK
+        Long id PK
         string nombre
         string descripcion
-        datetime fecha_de_creacion
     }
-    MASCOTAS {
-        int id PK
-        int fk_usuario FK
-        string nombre
-        string especie
-        string raza
-        datetime fecha_de_creacion
-    }
-    ESPECIALIDADES {
-        int id PK
-        string nombre
-        datetime fecha_de_creacion
-    }
-    ESPECIALISTAS {
-        int id PK
-        int fk_usuario FK
-        int fk_especialidad FK
-        string matricula
-        datetime fecha_de_creacion
-    }
-    TURNOS {
-        int id PK
-        int fk_mascota FK
-        int fk_especialista FK
-        datetime fecha_hora
-        string motivo
+    COMPRA {
+        Long id PK
+        Long fk_usuario FK
+        datetime fecha
+        decimal total
         string estado
-        datetime fecha_de_creacion
+    }
+    DETALLE_COMPRA {
+        Long id PK
+        Long fk_compra FK
+        Long fk_producto FK
+        int cantidad
+        decimal precioUnitario
     }
 
-    FACTURAS ||--o{ DETALLE_FACTURAS : contiene
-    FACTURAS }o--|| METODO_DE_PAGO : usa
-    FACTURAS }o--|| USUARIO : pertenece
-    USUARIO }o--|| ROLES : tiene
-    ROLES ||--o{ ROL_PERMISOS : asigna
-    PERMISOS ||--o{ ROL_PERMISOS : define
-    PRODUCTOS }o--|| CATEGORIA : clasifica
-    DETALLE_FACTURAS }o--|| PRODUCTOS : referencia
-    MASCOTAS }o--|| USUARIO : dueño
-    ESPECIALISTAS }o--|| USUARIO : perfil
-    ESPECIALISTAS }o--|| ESPECIALIDADES : especialidad
-    TURNOS }o--|| MASCOTAS : atiende
-    TURNOS }o--|| ESPECIALISTAS : asignado
+    USUARIO ||--o{ COMPRA : realiza
+    USUARIO }o--|| ROL : tiene
+    PRODUCTO }o--|| CATEGORIA : clasifica
+    COMPRA ||--o{ DETALLE_COMPRA : contiene
+    DETALLE_COMPRA }o--|| PRODUCTO : referencia
+```
+
+## 🚀 Inicio Rápido
+
+### Requisitos
+
+- Java 21+
+- Maven 3.8+
+- PostgreSQL 15+
+- Docker (opcional)
+
+### Configuración
+
+1. **Variables de entorno:**
+```bash
+export JWT_SECRET=PETSHOP_SECRET_KEY_256_BITS_MIN_FOR_HS256_ALGORITHM_2026
+```
+
+2. **Base de datos PostgreSQL:**
+```bash
+# Usando Docker
+docker run -d \
+  --name petshop_db \
+  -e POSTGRES_DB=petshop_ecommerce \
+  -e POSTGRES_USER=petshop_admin \
+  -e POSTGRES_PASSWORD=petshop_secure_pass \
+  -p 5432:5432 \
+  postgres:15
+```
+
+3. **Ejecutar la aplicación:**
+```bash
+./mvnw spring-boot:run
+```
+
+### Endpoints Principales
+
+| Método | Ruta | Descripción | Auth |
+|--------|------|-------------|------|
+| POST | `/auth/register` | Registro de usuario | No |
+| POST | `/auth/login` | Inicio de sesión | No |
+| GET | `/productos` | Listar productos | No |
+| GET | `/productos/{id}` | Obtener producto | No |
+| POST | `/productos` | Crear producto | ADMIN |
+| PUT | `/productos/{id}` | Actualizar producto | ADMIN |
+| DELETE | `/productos/{id}` | Eliminar producto | ADMIN |
+| GET | `/categorias` | Listar categorías | No |
+| POST | `/compras` | Crear compra | CLIENTE |
+
+### Documentación API (Swagger)
+
+Una vez iniciada la aplicación:
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON:** http://localhost:8080/api-docs
+
+## 🛠️ Tecnologías
+
+| Tecnología | Versión |
+|------------|---------|
+| Spring Boot | 3.4.13 |
+| Java | 21 (LTS) |
+| Spring Security | JWT |
+| Spring Data JPA | - |
+| PostgreSQL | 15 |
+| Flyway | - |
+| Swagger/OpenAPI | 2.8.4 |
+
+## 📁 Estructura del Proyecto
+
+```
+src/main/java/com/team4/petstore/
+├── config/           # Configuraciones (Security, OpenAPI, Web)
+├── controller/       # Controladores REST
+├── dto/              # Data Transfer Objects
+│   ├── request/      # DTOs de entrada
+│   └── response/    # DTOs de salida
+├── entity/          # Entidades JPA
+├── exception/       # Excepciones personalizadas
+├── repository/      # Repositorios JPA
+├── security/        # Filtros JWT y configuración de seguridad
+└── service/         # Lógica de negocio
 ```
