@@ -1,7 +1,7 @@
 package com.team4.petstore.controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import java.util.List;
@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/productos")
 public class ProductoController {
-    @Autowired
-    private ProductoService service;
+    private final ProductoService service;
+
+    public ProductoController(ProductoService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<Producto> obtenerProductos() {
@@ -22,7 +25,9 @@ public class ProductoController {
     }
 
     @PostMapping
-    public Producto crearProducto(@RequestBody Producto producto) {
+    public Producto crearProducto(@RequestBody @NonNull Producto producto) {
         return service.guardar(producto);
+        
     }
+
 }
