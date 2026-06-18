@@ -18,6 +18,9 @@ public class Producto {
     private String descripcion;
     private Double precio;
     private Integer stock;
+    
+    @jakarta.persistence.Column(nullable = false)
+    private Boolean activo = true;
 
     public Producto() {
     }
@@ -76,5 +79,13 @@ public class Producto {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }
