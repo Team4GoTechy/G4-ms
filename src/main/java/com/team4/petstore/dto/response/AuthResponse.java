@@ -1,12 +1,28 @@
 package com.team4.petstore.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Respuesta de autenticación con datos del usuario y token JWT")
 public class AuthResponse {
+    @Schema(description = "ID del usuario", example = "1")
     private Long id;
+
+    @Schema(description = "Nombre del usuario", example = "Juan")
     private String nombre;
+
+    @Schema(description = "Apellido del usuario", example = "Pérez")
     private String apellido;
+
+    @Schema(description = "Dirección del usuario", example = "Calle Principal 123")
     private String direccion;
+
+    @Schema(description = "Celular del usuario", example = "+5491123456789")
     private String celular;
+
+    @Schema(description = "Email del usuario", example = "juan.perez@email.com")
     private String email;
+
+    @Schema(description = "Token JWT para autenticación")
     private String token;
 
     public AuthResponse() {}
@@ -15,6 +31,16 @@ public class AuthResponse {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
+        this.email = email;
+        this.token = token;
+    }
+
+    public AuthResponse(Long id, String nombre, String apellido, String direccion, String celular, String email, String token) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.direccion = direccion;
+        this.celular = celular;
         this.email = email;
         this.token = token;
     }

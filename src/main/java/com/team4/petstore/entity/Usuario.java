@@ -2,7 +2,9 @@ package com.team4.petstore.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -18,6 +20,11 @@ public class Usuario {
 
     @Column(nullable = false, length = 100)
     private String apellido;
+
+    private Integer edad;
+
+    @Column(length = 255)
+    private String avatar;
 
     @Column(length = 255)
     private String direccion;
@@ -36,6 +43,9 @@ public class Usuario {
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Mascota> mascotas = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -76,4 +86,21 @@ public class Usuario {
     public void setRoles(Set<Rol> roles) { this.roles = roles; }
 
     public void addRol(Rol rol) { this.roles.add(rol); }
+
+    public Integer getEdad() { return edad; }
+    public void setEdad(Integer edad) { this.edad = edad; }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
+    public List<Mascota> getMascotas() { return mascotas; }
+    public void setMascotas(List<Mascota> mascotas) { this.mascotas = mascotas; }
+
+    public void addMascota(Mascota mascota) {
+        mascotas.add(mascota);
+        mascota.setUsuario(this);
+    }
+
+    public void removeMascota(Mascota mascota) {
+        mascotas.remove(mascota);
+        mascota.setUsuario(null);
+    }
 }

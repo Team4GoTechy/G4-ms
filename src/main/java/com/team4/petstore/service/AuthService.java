@@ -1,8 +1,10 @@
 package com.team4.petstore.service;
 
 import com.team4.petstore.dto.request.LoginRequest;
+import com.team4.petstore.dto.request.MascotaRequest;
 import com.team4.petstore.dto.request.RegisterRequest;
 import com.team4.petstore.dto.response.AuthResponse;
+import com.team4.petstore.entity.Mascota;
 import com.team4.petstore.entity.Rol;
 import com.team4.petstore.entity.Usuario;
 import com.team4.petstore.exception.BadRequestException;
@@ -50,6 +52,8 @@ public class AuthService {
             usuario.getId(),
             usuario.getNombre(),
             usuario.getApellido(),
+            usuario.getDireccion(),
+            usuario.getCelular(),
             usuario.getEmail(),
             token
         );
@@ -61,9 +65,25 @@ public class AuthService {
             throw new BadRequestException("El email ya está registrado");
         }
 
+        // Validar familyName si hay 3 o más mascotas
+        if (request.getCantidadMascotas() != null && request.getCantidadMascotas() >= 3) {
+            if (request.getFamilyName() == null || request.getFamilyName().isBlank()) {
+                throw new BadRequestException("El nombre de familia es obligatorio cuando se registran 3 o más mascotas");
+            }
+        }
+
+        // Validar que la cantidad de mascotas coincida con la lista enviada
+        if (request.getMascotas() != null && request.getCantidadMascotas() != null) {
+            if (request.getMascotas().size() != request.getCantidadMascotas()) {
+                throw new BadRequestException("La cantidad de mascotas no coincide con la lista enviada");
+            }
+        }
+
         Usuario usuario = new Usuario();
         usuario.setNombre(request.getNombre());
         usuario.setApellido(request.getApellido());
+        usuario.setEdad(request.getEdad());
+        usuario.setAvatar(request.getAvatar());
         usuario.setDireccion(request.getDireccion());
         usuario.setCelular(request.getCelular());
         usuario.setEmail(request.getEmail());
@@ -73,7 +93,22 @@ public class AuthService {
             .orElseThrow(() -> new BadRequestException("Rol ROLE_CLIENTE no encontrado"));
         usuario.addRol(rolCliente);
 
+        // Guardar usuario primero para obtener el ID
         usuario = usuarioRepository.save(usuario);
+
+        // Registrar mascotas si existen
+        if (request.getMascotas() != null && !request.getMascotas().isEmpty()) {
+            for (MascotaRequest mascotaRequest : request.getMascotas()) {
+                Mascota mascota = new Mascota(
+                    mascotaRequest.getNombre(),
+                    mascotaRequest.getSexo(),
+                    mascotaRequest.getTipo(),
+                    usuario
+                );
+                usuario.addMascota(mascota);
+            }
+            usuario = usuarioRepository.save(usuario);
+        }
 
         String token = jwtTokenProvider.generateTokenFromEmail(usuario.getEmail());
 
@@ -81,6 +116,8 @@ public class AuthService {
             usuario.getId(),
             usuario.getNombre(),
             usuario.getApellido(),
+            usuario.getDireccion(),
+            usuario.getCelular(),
             usuario.getEmail(),
             token
         );
