@@ -48,7 +48,7 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new BadRequestException("Usuario no encontrado"));
 
-        return new AuthResponse(
+        AuthResponse response = new AuthResponse(
             usuario.getId(),
             usuario.getNombre(),
             usuario.getApellido(),
@@ -57,6 +57,21 @@ public class AuthService {
             usuario.getEmail(),
             token
         );
+
+        // Extraer avatar del usuario
+        response.setAvatar(usuario.getAvatar());
+
+        // Extraer informacion de la primera mascota si existe
+        if (usuario.getMascotas() != null && !usuario.getMascotas().isEmpty()) {
+            Mascota primeraMascota = usuario.getMascotas().get(0);
+            response.setNombreMascota(primeraMascota.getNombre());
+            response.setTipoMascota(primeraMascota.getTipo());
+            response.setCantidadMascotas(usuario.getMascotas().size());
+        } else {
+            response.setCantidadMascotas(0);
+        }
+
+        return response;
     }
 
     @Transactional
@@ -112,7 +127,7 @@ public class AuthService {
 
         String token = jwtTokenProvider.generateTokenFromEmail(usuario.getEmail());
 
-        return new AuthResponse(
+        AuthResponse response = new AuthResponse(
             usuario.getId(),
             usuario.getNombre(),
             usuario.getApellido(),
@@ -121,5 +136,20 @@ public class AuthService {
             usuario.getEmail(),
             token
         );
+
+        // Extraer avatar del usuario
+        response.setAvatar(usuario.getAvatar());
+
+        // Extraer informacion de la primera mascota si existe
+        if (usuario.getMascotas() != null && !usuario.getMascotas().isEmpty()) {
+            Mascota primeraMascota = usuario.getMascotas().get(0);
+            response.setNombreMascota(primeraMascota.getNombre());
+            response.setTipoMascota(primeraMascota.getTipo());
+            response.setCantidadMascotas(usuario.getMascotas().size());
+        } else {
+            response.setCantidadMascotas(0);
+        }
+
+        return response;
     }
 }

@@ -5,6 +5,10 @@ import com.team4.petstore.dto.response.CompraResponse;
 import com.team4.petstore.entity.Usuario;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.service.CompraService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/compras")
+@Tag(name = "Compras", description = "Gestión de compras del usuario autenticado")
 public class CompraController {
 
     private final CompraService compraService;
@@ -26,6 +31,12 @@ public class CompraController {
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Operation(summary = "Crear compra", description = "Crea una nueva compra para el usuario autenticado")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Compra creada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos o stock insuficiente"),
+        @ApiResponse(responseCode = "401", description = "No autorizado")
+    })
     @PostMapping
     public ResponseEntity<CompraResponse> crearCompra(
             @Valid @RequestBody CompraRequest request,
@@ -35,6 +46,11 @@ public class CompraController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Obtener historial de compras", description = "Devuelve el historial de compras del usuario autenticado")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Historial obtenido correctamente"),
+        @ApiResponse(responseCode = "401", description = "No autorizado")
+    })
     @GetMapping
     public ResponseEntity<List<CompraResponse>> obtenerHistorial(Authentication authentication) {
         Long usuarioId = getUsuarioId(authentication);

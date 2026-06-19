@@ -37,6 +37,9 @@ public class Producto {
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
+    @Column(name = "imagen_url", length = 500)
+    private String imagenUrl;
+
     public Producto() {}
 
     public Long getId() { return id; }
@@ -57,4 +60,6 @@ public class Producto {
     public void setActivo(Boolean activo) { this.activo = activo; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

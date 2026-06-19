@@ -56,6 +56,7 @@ public class ProductoService {
         producto.setDescripcion(request.getDescripcion());
         producto.setPrecio(request.getPrecio());
         producto.setStock(request.getStock());
+        producto.setImagenUrl(request.getImagenUrl());
 
         if (request.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -81,6 +82,7 @@ public class ProductoService {
         producto.setDescripcion(request.getDescripcion());
         producto.setPrecio(request.getPrecio());
         producto.setStock(request.getStock());
+        producto.setImagenUrl(request.getImagenUrl());
 
         if (request.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -111,6 +113,7 @@ public class ProductoService {
         response.setPrecio(producto.getPrecio());
         response.setStock(producto.getStock());
         response.setActivo(producto.getActivo());
+        response.setImagenUrl(producto.getImagenUrl());
         if (producto.getCategoria() != null) {
             response.setCategoria(producto.getCategoria().getNombre());
         }
