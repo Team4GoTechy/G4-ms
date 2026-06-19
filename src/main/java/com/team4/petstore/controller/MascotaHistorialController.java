@@ -19,7 +19,7 @@ public class MascotaHistorialController {
     }
 
     @GetMapping("/{id}/historial-clinico")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<Page<ConsultaResponse>> historial(
             @PathVariable Long id, Pageable pageable) {
         return ResponseEntity.ok(consultaService.historialPorMascota(id, pageable));

@@ -34,13 +34,13 @@ public class InternacionController {
     }
 
     @GetMapping("/activas")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<List<InternacionResponse>> listarActivas() {
         return ResponseEntity.ok(internacionService.listarActivas());
     }
 
     @PostMapping("/{id}/evolucion")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<EvolucionResponse> registrarEvolucion(
             @PathVariable Long id,
             @Valid @RequestBody EvolucionRequest dto,

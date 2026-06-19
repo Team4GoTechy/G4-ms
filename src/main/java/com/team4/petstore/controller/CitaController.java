@@ -26,19 +26,19 @@ public class CitaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<CitaResponse> crear(@Valid @RequestBody CitaRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(citaService.crear(dto));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<CitaResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(citaService.buscarPorId(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<List<CitaResponse>> obtenerAgenda(
             @RequestParam Long veterinarioId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
@@ -46,7 +46,7 @@ public class CitaController {
     }
     
     @GetMapping("/agenda/mes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<List<CitaResponse>> obtenerAgendaDelMes(
             @RequestParam Long veterinarioId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth mes) {
@@ -54,14 +54,14 @@ public class CitaController {
     }
 
     @GetMapping("/todas")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<List<CitaResponse>> obtenerTodasLasCitas(
             @RequestParam Long veterinarioId) {
         return ResponseEntity.ok(citaService.obtenerTodasLasCitas(veterinarioId));
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<CitaResponse> actualizarEstado(
             @PathVariable Long id,
             @Valid @RequestBody EstadoCitaRequest dto) {

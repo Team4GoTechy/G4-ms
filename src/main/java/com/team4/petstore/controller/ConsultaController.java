@@ -37,7 +37,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<ConsultaResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(consultaService.buscarPorId(id));
     }
@@ -54,7 +54,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/{id}/prescripcion")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<PrescripcionResponse> verPrescripcion(@PathVariable Long id) {
         return ResponseEntity.ok(prescripcionService.buscarPorConsulta(id));
     }
