@@ -27,6 +27,10 @@ public class Producto {
     @Column(nullable = false)
     private Integer stock = 0;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unidad_medida", length = 20)
+    private UnidadMedida unidadMedida;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
@@ -54,6 +58,8 @@ public class Producto {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
+    public UnidadMedida getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(UnidadMedida unidadMedida) { this.unidadMedida = unidadMedida; }
     public Categoria getCategoria() { return categoria; }
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
     public Boolean getActivo() { return activo; }
