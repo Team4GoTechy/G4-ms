@@ -1,6 +1,7 @@
 package com.team4.petstore.config;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,14 +21,33 @@ public class CloudinaryConfig {
     @Value("${cloudinary.api-secret}")
     private String apiSecret;
 
+    @Value("${cloudinary.default-avatars.admin}")
+    private String defaultAvatarAdmin;
+
+    @Value("${cloudinary.default-avatars.doctor}")
+    private String defaultAvatarDoctor;
+
+    @Value("${cloudinary.default-avatars.cliente}")
+    private String defaultAvatarCliente;
+
     @Bean
     public Cloudinary cloudinary() {
         Map<String, String> config = new HashMap<>();
         config.put("cloud_name", cloudName);
         config.put("api_key", apiKey);
         config.put("api_secret", apiSecret);
-        config.put("secure", "true");
 
         return new Cloudinary(config);
+    }
+
+    public String getDefaultAvatarAdmin() { return defaultAvatarAdmin; }
+    public String getDefaultAvatarDoctor() { return defaultAvatarDoctor; }
+    public String getDefaultAvatarCliente() { return defaultAvatarCliente; }
+
+    public String getDefaultAvatarByRole(String role) {
+        if (role == null) return defaultAvatarCliente;
+        if (role.contains("ADMIN")) return defaultAvatarAdmin;
+        if (role.contains("DOCTOR")) return defaultAvatarDoctor;
+        return defaultAvatarCliente;
     }
 }
