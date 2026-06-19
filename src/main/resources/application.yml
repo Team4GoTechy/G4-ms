@@ -30,6 +30,10 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:}
   api-key: ${CLOUDINARY_API_KEY:}
   api-secret: ${CLOUDINARY_API_SECRET:}
+  default-avatars:
+    admin: ${CLOUDINARY_AVATAR_ADMIN:https://res.cloudinary.com/demo/image/upload/v1/defaults/admin_default.png}
+    doctor: ${CLOUDINARY_AVATAR_DOCTOR:https://res.cloudinary.com/demo/image/upload/v1/defaults/doctor_default.png}
+    cliente: ${CLOUDINARY_AVATAR_CLIENTE:https://res.cloudinary.com/demo/image/upload/v1/defaults/cliente_default.png}
 
 server:
   port: 8080
