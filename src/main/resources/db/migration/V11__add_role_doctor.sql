@@ -1,0 +1,1 @@
+INSERT INTO roles (nombre) VALUES ('ROLE_DOCTOR');
