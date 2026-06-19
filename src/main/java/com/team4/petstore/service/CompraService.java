@@ -93,6 +93,59 @@ public class CompraService {
             .collect(Collectors.toList());
     }
 
+    @Transactional
+    public CompraResponse updateEstado(Long compraId, String nuevoEstado) {
+        Compra compra = compraRepository.findByIdWithDetalles(compraId)
+            .orElseThrow(() -> new ResourceNotFoundException("Compra no encontrada con id: " + compraId));
+
+        EstadoCompra estadoActual = compra.getEstado();
+        EstadoCompra nuevo;
+
+        try {
+            nuevo = EstadoCompra.valueOf(nuevoEstado.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Estado inválido: " + nuevoEstado);
+        }
+
+        if (estadoActual == nuevo) {
+            return toResponse(compra);
+        }
+
+        if (estadoActual == EstadoCompra.ENTREGADO) {
+            throw new BadRequestException("No se puede cambiar el estado de una compra ya entregada");
+        }
+
+        boolean restaurarStock = false;
+        boolean descontarStock = false;
+
+        if (nuevo == EstadoCompra.CANCELADO && estadoActual != EstadoCompra.CANCELADO) {
+            restaurarStock = true;
+        } else if (estadoActual == EstadoCompra.CANCELADO && nuevo != EstadoCompra.CANCELADO) {
+            descontarStock = true;
+        }
+
+        if (restaurarStock) {
+            for (DetalleCompra detalle : compra.getDetalles()) {
+                productoRepository.restituirStock(detalle.getProducto().getId(), detalle.getCantidad());
+            }
+        }
+
+        if (descontarStock) {
+            for (DetalleCompra detalle : compra.getDetalles()) {
+                int updated = productoRepository.descontarStock(detalle.getProducto().getId(), detalle.getCantidad());
+                if (updated == 0) {
+                    throw new StockInsuficienteException(
+                        "Stock insuficiente para restaurar en producto: " + detalle.getProducto().getNombre()
+                    );
+                }
+            }
+        }
+
+        compra.setEstado(nuevo);
+        compra = compraRepository.save(compra);
+        return toResponse(compra);
+    }
+
     private CompraResponse toResponse(Compra compra) {
         CompraResponse response = new CompraResponse();
         response.setId(compra.getId());

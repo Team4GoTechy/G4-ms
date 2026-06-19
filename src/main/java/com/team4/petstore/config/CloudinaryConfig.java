@@ -21,6 +21,15 @@ public class CloudinaryConfig {
     @Value("${cloudinary.api-secret}")
     private String apiSecret;
 
+    @Value("${cloudinary.default-avatars.admin}")
+    private String defaultAvatarAdmin;
+
+    @Value("${cloudinary.default-avatars.doctor}")
+    private String defaultAvatarDoctor;
+
+    @Value("${cloudinary.default-avatars.cliente}")
+    private String defaultAvatarCliente;
+
     @Bean
     public Cloudinary cloudinary() {
         Map<String, String> config = new HashMap<>();
@@ -29,5 +38,16 @@ public class CloudinaryConfig {
         config.put("api_secret", apiSecret);
 
         return new Cloudinary(config);
+    }
+
+    public String getDefaultAvatarAdmin() { return defaultAvatarAdmin; }
+    public String getDefaultAvatarDoctor() { return defaultAvatarDoctor; }
+    public String getDefaultAvatarCliente() { return defaultAvatarCliente; }
+
+    public String getDefaultAvatarByRole(String role) {
+        if (role == null) return defaultAvatarCliente;
+        if (role.contains("ADMIN")) return defaultAvatarAdmin;
+        if (role.contains("DOCTOR")) return defaultAvatarDoctor;
+        return defaultAvatarCliente;
     }
 }

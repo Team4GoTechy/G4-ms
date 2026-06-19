@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class CategoriaController {
         @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<Categoria> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<Categoria> obtenerPorId(@PathVariable @NonNull Long id) {
         return ResponseEntity.ok(categoriaService.obtenerPorId(id));
     }
 
@@ -48,7 +49,7 @@ public class CategoriaController {
         @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
     @PostMapping
-    public ResponseEntity<Categoria> guardar(@RequestBody CategoriaRequest request) {
+    public ResponseEntity<Categoria> guardar(@RequestBody @NonNull CategoriaRequest request) {
         Categoria categoria = categoriaService.guardar(request.getNombre(), request.getDescripcion());
         return ResponseEntity.status(HttpStatus.CREATED).body(categoria);
     }
@@ -59,7 +60,7 @@ public class CategoriaController {
         @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable @NonNull Long id) {
         categoriaService.eliminar(id);
         return ResponseEntity.noContent().build();
     }

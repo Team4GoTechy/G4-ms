@@ -23,6 +23,9 @@ public class ProductoResponse {
     @Schema(description = "Cantidad en stock", example = "100")
     private Integer stock;
 
+    @Schema(description = "Unidad de medida del producto", example = "kg")
+    private String unidadMedida;
+
     @Schema(description = "Nombre de la categoria", example = "Alimentos")
     private String categoria;
 
@@ -46,6 +49,8 @@ public class ProductoResponse {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
     public Boolean getActivo() { return activo; }

@@ -1,5 +1,6 @@
 package com.team4.petstore.service;
 
+import com.team4.petstore.config.CloudinaryConfig;
 import com.team4.petstore.dto.request.LoginRequest;
 import com.team4.petstore.dto.request.MascotaRequest;
 import com.team4.petstore.dto.request.RegisterRequest;
@@ -26,17 +27,20 @@ public class AuthService {
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CloudinaryConfig cloudinaryConfig;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UsuarioRepository usuarioRepository,
                        RolRepository rolRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider,
+                       CloudinaryConfig cloudinaryConfig) {
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.cloudinaryConfig = cloudinaryConfig;
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -98,7 +102,6 @@ public class AuthService {
         usuario.setNombre(request.getNombre());
         usuario.setApellido(request.getApellido());
         usuario.setEdad(request.getEdad());
-        usuario.setAvatar(request.getAvatar());
         usuario.setDireccion(request.getDireccion());
         usuario.setCelular(request.getCelular());
         usuario.setEmail(request.getEmail());
@@ -107,6 +110,13 @@ public class AuthService {
         Rol rolCliente = rolRepository.findByNombre("ROLE_CLIENTE")
             .orElseThrow(() -> new BadRequestException("Rol ROLE_CLIENTE no encontrado"));
         usuario.addRol(rolCliente);
+
+        // Asignar avatar por defecto si no se provee uno
+        String avatarUrl = request.getAvatar();
+        if (avatarUrl == null || avatarUrl.isBlank()) {
+            avatarUrl = cloudinaryConfig.getDefaultAvatarCliente();
+        }
+        usuario.setAvatar(avatarUrl);
 
         // Guardar usuario primero para obtener el ID
         usuario = usuarioRepository.save(usuario);

@@ -4,6 +4,7 @@ import com.team4.petstore.dto.request.ProductoRequest;
 import com.team4.petstore.dto.response.ProductoResponse;
 import com.team4.petstore.entity.Categoria;
 import com.team4.petstore.entity.Producto;
+import com.team4.petstore.entity.UnidadMedida;
 import com.team4.petstore.exception.BadRequestException;
 import com.team4.petstore.exception.ResourceNotFoundException;
 import com.team4.petstore.repository.CategoriaRepository;
@@ -58,6 +59,15 @@ public class ProductoService {
         producto.setStock(request.getStock());
         producto.setImagenUrl(request.getImagenUrl());
 
+        if (request.getUnidadMedida() != null && !request.getUnidadMedida().isBlank()) {
+            try {
+                UnidadMedida unidad = UnidadMedida.valueOf(request.getUnidadMedida().toUpperCase());
+                producto.setUnidadMedida(unidad);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Unidad de medida inválida: " + request.getUnidadMedida());
+            }
+        }
+
         if (request.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + request.getCategoriaId()));
@@ -83,6 +93,17 @@ public class ProductoService {
         producto.setPrecio(request.getPrecio());
         producto.setStock(request.getStock());
         producto.setImagenUrl(request.getImagenUrl());
+
+        if (request.getUnidadMedida() != null && !request.getUnidadMedida().isBlank()) {
+            try {
+                UnidadMedida unidad = UnidadMedida.valueOf(request.getUnidadMedida().toUpperCase());
+                producto.setUnidadMedida(unidad);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Unidad de medida inválida: " + request.getUnidadMedida());
+            }
+        } else {
+            producto.setUnidadMedida(null);
+        }
 
         if (request.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -112,6 +133,9 @@ public class ProductoService {
         response.setDescripcion(producto.getDescripcion());
         response.setPrecio(producto.getPrecio());
         response.setStock(producto.getStock());
+        if (producto.getUnidadMedida() != null) {
+            response.setUnidadMedida(producto.getUnidadMedida().getSimbolo());
+        }
         response.setActivo(producto.getActivo());
         response.setImagenUrl(producto.getImagenUrl());
         if (producto.getCategoria() != null) {
