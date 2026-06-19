@@ -42,9 +42,11 @@ public class ImageController {
             response.put("url", url);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Error al subir la imagen: " + e.getMessage()));
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

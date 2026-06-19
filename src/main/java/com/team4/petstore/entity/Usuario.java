@@ -1,5 +1,6 @@
 package com.team4.petstore.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class Usuario {
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Mascota> mascotas = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
