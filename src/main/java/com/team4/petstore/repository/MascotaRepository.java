@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface MascotaRepository extends JpaRepository<Mascota, Long> {
 
-    List<Mascota> findByClienteId(Long clienteId);
+    List<Mascota> findByUsuarioId(Long usuarioId);
 
-    boolean existsByIdAndClienteId(Long id, Long clienteId);
+    boolean existsByIdAndUsuarioId(Long id, Long usuarioId);
 }
