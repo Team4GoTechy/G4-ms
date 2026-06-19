@@ -3,6 +3,7 @@ package com.team4.petstore.service;
 import com.team4.petstore.dto.request.CitaRequest;
 import com.team4.petstore.dto.request.EstadoCitaRequest;
 import com.team4.petstore.dto.response.CitaResponse;
+import com.team4.petstore.dto.response.MascotaResponse;
 import com.team4.petstore.entity.Cita;
 import com.team4.petstore.entity.Mascota;
 import com.team4.petstore.entity.Veterinario;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,19 @@ public class CitaService {
 
         return mapToResponse(citaRepository.save(cita));
     }
+    
+    @Transactional(readOnly = true)
+    public List<MascotaResponse> obtenerTodasLasMascotas() {
+        return mascotaRepository.findAll()
+            .stream()
+            .map(m -> new MascotaResponse(
+                m.getId(),
+                m.getNombre(),
+                m.getSexo(),
+                m.getTipo()
+            ))
+            .collect(Collectors.toList());
+    }
 
     @Transactional
     public CitaResponse actualizarEstado(Long citaId, EstadoCitaRequest dto) {
@@ -94,6 +109,32 @@ public class CitaService {
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
+    
+    @Transactional(readOnly = true)
+    public List<CitaResponse> obtenerAgendaDelMes(Long veterinarioId, YearMonth mes) {
+        LocalDate primerDia = mes.atDay(1);
+        LocalDate ultimoDia = mes.atEndOfMonth();
+
+        LocalDateTime inicio = primerDia.atStartOfDay();
+        LocalDateTime fin = ultimoDia.atTime(LocalTime.MAX);
+
+        return citaRepository
+            .findByVeterinarioIdAndFechaHoraBetween(veterinarioId, inicio, fin)
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public List<CitaResponse> obtenerTodasLasCitas(Long veterinarioId) {
+        return citaRepository
+            .findByVeterinarioId(veterinarioId)
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+
 
     private CitaResponse mapToResponse(Cita cita) {
         CitaResponse dto = new CitaResponse();
