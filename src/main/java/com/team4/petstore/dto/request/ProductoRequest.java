@@ -31,6 +31,9 @@ public class ProductoRequest {
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;
 
+    @Schema(description = "Unidad de medida del producto", example = "kg", allowableValues = {"g", "kg", "ml", "L", "unidad"})
+    private String unidadMedida;
+
     @Schema(description = "ID de la categoria", example = "1")
     private Long categoriaId;
 
@@ -49,6 +52,8 @@ public class ProductoRequest {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
     public Long getCategoriaId() { return categoriaId; }
     public void setCategoriaId(Long categoriaId) { this.categoriaId = categoriaId; }
     public String getImagenUrl() { return imagenUrl; }

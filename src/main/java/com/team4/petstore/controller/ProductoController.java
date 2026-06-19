@@ -54,9 +54,10 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.obtenerPorId(id));
     }
 
-    @Operation(summary = "Crear producto", description = "Crea un nuevo producto (solo ADMIN)")
+    @Operation(summary = "Crear producto", description = "Crea un nuevo producto (solo ADMIN). La unidad de medida es opcional: g, kg, ml, L, unidad")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Producto creado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o unidad de medida incorrecta"),
             @ApiResponse(responseCode = "401", description = "No autorizado"),
             @ApiResponse(responseCode = "403", description = "Acceso denegado")
     })
@@ -67,9 +68,10 @@ public class ProductoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "Actualizar producto", description = "Actualiza un producto existente (solo ADMIN)")
+    @Operation(summary = "Actualizar producto", description = "Actualiza un producto existente (solo ADMIN). La unidad de medida es opcional: g, kg, ml, L, unidad")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Producto actualizado"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o unidad de medida incorrecta"),
             @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @PutMapping("/{id}")
