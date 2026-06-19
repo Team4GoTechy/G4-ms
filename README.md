@@ -6,7 +6,7 @@ Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
 Este módulo implementa la gestión de historial clínico de mascotas y consultas médicas dentro del sistema, con control de acceso por roles.
 
 ### Funcionalidades Principales
-|--------|-------------|
+
 | Módulo |	Descripción|
 |--------|-------------|
 |Mascotas |	Gestión de mascotas con datos básicos y vínculo con su dueño|
