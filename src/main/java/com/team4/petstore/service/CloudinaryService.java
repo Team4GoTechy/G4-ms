@@ -49,7 +49,7 @@ public class CloudinaryService {
         params.put("overwrite", true);
         params.put("transformation", buildTransformation(width, height));
 
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
 
         return (String) uploadResult.get("secure_url");
     }
@@ -87,6 +87,7 @@ public class CloudinaryService {
     /**
      * Construye la transformación de imagen para Cloudinary.
      */
+    @SuppressWarnings("unchecked")
     private Transformation buildTransformation(int width, int height) {
         Transformation transformation = new Transformation();
 

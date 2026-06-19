@@ -1,7 +1,6 @@
 package com.team4.petstore.config;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.Transformation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +26,7 @@ public class CloudinaryConfig {
         config.put("cloud_name", cloudName);
         config.put("api_key", apiKey);
         config.put("api_secret", apiSecret);
+        config.put("secure", "true");
 
         return new Cloudinary(config);
     }
