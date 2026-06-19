@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface CitaRepository extends JpaRepository<Cita, Long> {
 
+    List<Cita> findByVeterinarioId(Long veterinarioId);
+
     List<Cita> findByVeterinarioIdAndFechaHoraBetween(
         Long veterinarioId, LocalDateTime inicio, LocalDateTime fin);
 
