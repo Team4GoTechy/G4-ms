@@ -41,10 +41,10 @@ public class DataSeederConfig {
             log.info("Created ADMIN: admin@petshop.com");
 
             Usuario doctor = crearUsuario("Doctor", "Veterinario", "doctor@petshop.com", encodedPassword);
-            doctor.addRol(rolRepository.findByNombre("ROLE_DOCTOR")
-                .orElseThrow(() -> new RuntimeException("ROLE_DOCTOR not found")));
+            doctor.addRol(rolRepository.findByNombre("ROLE_VETERINARIO")
+                .orElseThrow(() -> new RuntimeException("ROLE_VETERINARIO not found")));
             usuarioRepository.save(doctor);
-            log.info("Created DOCTOR: doctor@petshop.com");
+            log.info("Created DOCTOR with ROLE_VETERINARIO: doctor@petshop.com");
 
             Usuario cliente = crearUsuario("Cliente", "Demo", "cliente@petshop.com", encodedPassword);
             cliente.addRol(rolRepository.findByNombre("ROLE_CLIENTE")
