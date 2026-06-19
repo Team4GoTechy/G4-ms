@@ -1,4 +1,4 @@
-# G4-ms - PetStore E-Commerce Backend
+# G4-ms - PetStore Backend
 
 Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
 
