@@ -548,7 +548,7 @@ src/main/java/com/team4/petstore/
 | PostgreSQL | 15 |
 | Flyway | - |
 | Swagger/OpenAPI | 2.8.4 |
-| Cloudinary | HTTP API |
+| Cloudinary | cloudinary-http45 (HTTP API) |
 
 ---
 
