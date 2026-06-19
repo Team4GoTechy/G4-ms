@@ -1,153 +1,139 @@
-# G4-ms - PetStore E-Commerce Backend
+# G4-ms - PetStore Backend
 
 Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
 
-## 📋 Descripción del Módulo E-Commerce
-
-Este módulo implementa un sistema de **e-commerce** completo para una tienda de mascotas, con las siguientes funcionalidades:
+## 📋 Descripción del Módulo Veterinaria
+Este módulo implementa la gestión de historial clínico de mascotas y consultas médicas dentro del sistema, con control de acceso por roles.
 
 ### Funcionalidades Principales
 
-| Módulo | Descripción |
+| Módulo |	Descripción|
 |--------|-------------|
-| **Productos** | Gestión de productos con código único, precios, stock y categorías |
-| **Categorías** | Organización de productos por categorías |
-| **Carrito de Compras** | Agregar, modificar y eliminar items del carrito |
-| **Compras** | Proceso completo de compra con validación de stock |
-| **Usuarios** | Sistema de usuarios con roles (CLIENTE, ADMIN) |
-| **Autenticación** | JWT-based authentication |
+|Mascotas |	Gestión de mascotas con datos básicos y vínculo con su dueño|
+|Consultas	| Registro de consultas médicas con diagnóstico, tratamiento y fecha|
+|Historial Clínico	| Listado paginado de consultas asociadas a cada mascota|
+|Veterinarios	| Gestión de usuarios con rol de veterinario|
+|Autenticación y Roles	| Control de acceso mediante JWT y roles (ADMIN, VETERINARIO)|
 
 ### Modelo de Datos
-
 ```mermaid
 erDiagram
+    MASCOTA {
+        Long id PK
+        string nombre
+        string especie
+        Long fk_dueno FK
+    }
+    CONSULTA {
+        Long id PK
+        Long fk_mascota FK
+        Long fk_veterinario FK
+        date fecha
+        string diagnostico
+        string tratamiento
+    }
     USUARIO {
         Long id PK
-        Long fk_rol FK
         string nombre
         string email
         string contrasena
-        string direccion
-        string telefono
     }
     ROL {
         Long id PK
         string nombre
     }
-    PRODUCTO {
-        Long id PK
-        Long fk_categoria FK
-        string nombre
-        string codigo
-        string descripcion
-        decimal precio
-        int stock
-        boolean activo
-    }
-    CATEGORIA {
-        Long id PK
-        string nombre
-        string descripcion
-    }
-    COMPRA {
-        Long id PK
-        Long fk_usuario FK
-        datetime fecha
-        decimal total
-        string estado
-    }
-    DETALLE_COMPRA {
-        Long id PK
-        Long fk_compra FK
-        Long fk_producto FK
-        int cantidad
-        decimal precioUnitario
-    }
 
-    USUARIO ||--o{ COMPRA : realiza
+    MASCOTA ||--o{ CONSULTA : tiene
+    CONSULTA }o--|| USUARIO : realizada_por
     USUARIO }o--|| ROL : tiene
-    PRODUCTO }o--|| CATEGORIA : clasifica
-    COMPRA ||--o{ DETALLE_COMPRA : contiene
-    DETALLE_COMPRA }o--|| PRODUCTO : referencia
 ```
 
 ## 🚀 Inicio Rápido
-
-### Requisitos
-
+Requisitos  
 - Java 21+
 - Maven 3.8+
 - PostgreSQL 15+
-- Docker (opcional)
+- Docker / WSL2 (opcional)
 
 ### Configuración
-
 1. **Variables de entorno:**
+
 ```bash
-export JWT_SECRET=PETSHOP_SECRET_KEY_256_BITS_MIN_FOR_HS256_ALGORITHM_2026
+export JWT_SECRET=VETERINARIA_SECRET_KEY_256_BITS_2026
 ```
 
-2. **Base de datos PostgreSQL:**
+2. Base de datos PostgreSQL:
+
 ```bash
-# Usando Docker
 docker run -d \
-  --name petshop_db \
-  -e POSTGRES_DB=petshop_ecommerce \
-  -e POSTGRES_USER=petshop_admin \
-  -e POSTGRES_PASSWORD=petshop_secure_pass \
+  --name vet_db \
+  -e POSTGRES_DB=vet_clinic \
+  -e POSTGRES_USER=vet_admin \
+  -e POSTGRES_PASSWORD=vet_secure_pass \
   -p 5432:5432 \
   postgres:15
 ```
 
-3. **Ejecutar la aplicación:**
+3. Ejecutar la aplicación:
+
 ```bash
 ./mvnw spring-boot:run
 ```
 
-### Endpoints Principales
+### 🔗 Endpoints Principales
+|Método|	Ruta|	Descripción|	Auth|
+|------|--------|--------------|--------|
+|GET   | /api/v1/mascotas/{id}/historial-clinico |	Listar historial clínico de una mascota	| ADMIN, VETERINARIO |
+|POST  | /api/v1/consultas	| Registrar nueva consulta	| ADMIN, VETERINARIO |
+|PUT   | /api/v1/consultas/{id}	| Actualizar consulta	| ADMIN, VETERINARIO |
+|DELETE|	/api/v1/consultas/{id}	| Eliminar consulta	| ADMIN |
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/auth/register` | Registro de usuario | No |
-| POST | `/auth/login` | Inicio de sesión | No |
-| GET | `/productos` | Listar productos | No |
-| GET | `/productos/{id}` | Obtener producto | No |
-| POST | `/productos` | Crear producto | ADMIN |
-| PUT | `/productos/{id}` | Actualizar producto | ADMIN |
-| DELETE | `/productos/{id}` | Eliminar producto | ADMIN |
-| GET | `/categorias` | Listar categorías | No |
-| POST | `/compras` | Crear compra | CLIENTE |
+**Ejemplo de respuesta:**
 
-### Documentación API (Swagger)
+```json
+{
+  "content": [
+    {
+      "id": 12,
+      "fecha": "2026-06-18",
+      "diagnostico": "Otitis",
+      "tratamiento": "Antibióticos",
+      "veterinario": "Dr. López"
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
 
+### 📖 Documentación API (Swagger)
 Una vez iniciada la aplicación:
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON:** http://localhost:8080/api-docs
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/api-docs
 
 ## 🛠️ Tecnologías
+| Tecnología	| Versión |
+|---------------|---------|
+|Spring Boot	| 4.1.0|
+|Java	| 21 (LTS)|
+|Spring Security	| JWT|
+|Spring Data JPA	| -|
+|PostgreSQL |	15|
+|Flyway	| -|
+|Swagger/OpenAPI |	2.8.4|
 
-| Tecnología | Versión |
-|------------|---------|
-| Spring Boot | 3.4.13 |
-| Java | 21 (LTS) |
-| Spring Security | JWT |
-| Spring Data JPA | - |
-| PostgreSQL | 15 |
-| Flyway | - |
-| Swagger/OpenAPI | 2.8.4 |
 
 ## 📁 Estructura del Proyecto
-
 ```
 src/main/java/com/team4/petstore/
 ├── config/           # Configuraciones (Security, OpenAPI, Web)
-├── controller/       # Controladores REST
+├── controller/       # Controladores REST (MascotaHistorialController, ConsultaController)
 ├── dto/              # Data Transfer Objects
-│   ├── request/      # DTOs de entrada
-│   └── response/    # DTOs de salida
-├── entity/          # Entidades JPA
-├── exception/       # Excepciones personalizadas
-├── repository/      # Repositorios JPA
-├── security/        # Filtros JWT y configuración de seguridad
-└── service/         # Lógica de negocio
+│   ├── request/      # DTOs de entrada (ConsultaRequestDTO)
+│   └── response/     # DTOs de salida (ConsultaResponseDTO)
+├── entity/           # Entidades JPA (Mascota, Consulta, Usuario, Rol)
+├── exception/        # Excepciones personalizadas
+├── repository/       # Repositorios JPA
+├── security/         # Filtros JWT y configuración de seguridad
+└── service/          # Lógica de negocio (ConsultaService, MascotaService)
 ```
