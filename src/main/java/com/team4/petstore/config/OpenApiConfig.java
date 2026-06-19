@@ -15,13 +15,15 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        final String description = "API REST para el modulo de e-commerce del Pet Store. " +
-            "Incluye autenticacion JWT, registro de usuarios con sus mascotas, gestion de productos, " +
-            "categorias y compras.";
+        final String description = "API REST completa para Pet Store. Incluye dos módulos principales:\n" +
+            "- **E-Commerce**: Gestión de productos, categorías, carrito de compras, compras y usuarios\n" +
+            "- **Gestión Veterinaria (Vet-Stock)**: Gestión de insumos médicos, stock, solicitudes de reposición, órdenes de compra y proveedores\n\n" +
+            "Incluye autenticación JWT, control de acceso por roles (ADMIN, VETERINARIO, CLIENTE), " +
+            "registro de usuarios con mascotas, y gestión completa del flujo de insumos veterinarios.";
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("PetStore E-Commerce API")
+                        .title("PetStore API - E-Commerce & Vet-Stock")
                         .version("1.0.0")
                         .description(description)
                         .contact(new Contact()

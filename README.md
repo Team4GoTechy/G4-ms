@@ -4,12 +4,69 @@ Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto implementa un sistema completo de **e-commerce** y **gestión veterinaria** para una tienda de mascotas, con dos módulos principales:
+Este proyecto implementa un sistema completo de **e-commerce** y **gestión veterinaria** para una tienda de mascotas, con tres módulos principales:
 
 | Módulo | Descripción |
 |--------|-------------|
 | **E-Commerce** | Gestión de productos, compras y usuarios (CLIENTE, ADMIN) |
-| **Gestión Veterinaria** | Gestión de insumos médicos, solicitudes y órdenes de compra (VETERINARIO, ADMIN) |
+| **Gestión Veterinaria** | Gestión de historial clínico, consultas, citas e internaciones (VETERINARIO, ADMIN) |
+| **Vet-Stock** | Gestión de insumos médicos, stock, solicitudes y órdenes de compra (VETERINARIO, ADMIN) |
+
+---
+
+## 🏥 Módulo de Gestión Veterinaria (Sv-Veterinaria)
+
+### Descripción
+
+Este módulo implementa la gestión de historial clínico de mascotas, consultas médicas, citas e internaciones dentro del sistema, con control de acceso por roles.
+
+### Funcionalidades Principales
+
+| Funcionalidad | Descripción |
+|---------------|-------------|
+| **Mascotas** | Gestión de mascotas con datos básicos y vínculo con su dueño |
+| **Historial Clínico** | Listado paginado de consultas asociadas a cada mascota |
+| **Consultas** | Registro de consultas médicas con diagnóstico, tratamiento y fecha |
+| **Citas** | Gestión de citas con validación de horarios no superpuestos |
+| **Internaciones** | Control de internaciones con evoluciones registradas |
+| **Prescripciones** | Gestión de prescripciones médicas vinculadas a consultas |
+
+### Modelo de Datos (Veterinaria)
+
+```mermaid
+erDiagram
+    MASCOTA {
+        Long id PK
+        string nombre
+        string especie
+        string sexo
+        Long fk_dueno FK
+    }
+    CONSULTA {
+        Long id PK
+        Long fk_mascota FK
+        Long fk_veterinario FK
+        date fecha
+        string diagnostico
+        string tratamiento
+    }
+    USUARIO ||--o{ MASCOTA : tiene
+    MASCOTA ||--o{ CONSULTA : tiene
+    CONSULTA }o--|| USUARIO : realizada_por
+```
+
+### Endpoints Principales (Sv-Veterinaria)
+
+| Método | Ruta | Descripción | Auth |
+|--------|------|-------------|------|
+| GET | `/api/v1/mascotas/{id}/historial-clinico` | Listar historial clínico | ADMIN, VETERINARIO |
+| POST | `/api/v1/consultas` | Registrar nueva consulta | ADMIN, VETERINARIO |
+| PUT | `/api/v1/consultas/{id}` | Actualizar consulta | ADMIN, VETERINARIO |
+| DELETE | `/api/v1/consultas/{id}` | Eliminar consulta | ADMIN |
+| POST | `/api/v1/citas` | Crear cita | ADMIN, VETERINARIO |
+| GET | `/api/v1/citas/veterinario/{id}/mes?anio=&mes=` | Agenda del mes | ADMIN, VETERINARIO |
+| POST | `/api/v1/internaciones` | Crear internación | ADMIN, VETERINARIO |
+| PUT | `/api/v1/internaciones/{id}/evolucion` | Agregar evolución | ADMIN, VETERINARIO |
 
 ---
 
@@ -449,6 +506,11 @@ src/main/java/com/team4/petstore/
 │   ├── ImageController.java
 │   ├── ProductoController.java
 │   ├── UsuarioController.java
+│   ├── MascotaController.java
+│   ├── MascotaHistorialController.java
+│   ├── ConsultaController.java
+│   ├── CitaController.java
+│   ├── InternacionController.java
 │   ├── InsumoController.java
 │   ├── StockInsumoController.java
 │   ├── SolicitudReposicionController.java
@@ -460,15 +522,17 @@ src/main/java/com/team4/petstore/
 ├── entity/             # Entidades JPA
 │   ├── Usuario.java, Rol.java, Producto.java
 │   ├── Categoria.java, Compra.java, DetalleCompra.java
+│   ├── Mascota.java, Consulta.java, Cita.java
 │   ├── Insumo.java, StockInsumo.java, MovimientoInsumo.java
 │   ├── SolicitudReposicion.java, DetalleSolicitud.java
 │   ├── OrdenCompra.java, DetalleOrdenCompra.java
-│   ├── Proveedor.java
-│   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, etc.
+│   ├── Proveedor.java, Internacion.java, Prescripcion.java
+│   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, EstadoCita, etc.
 ├── exception/         # Excepciones personalizadas
 ├── repository/         # Repositorios JPA
 ├── security/           # Filtros JWT y configuración de seguridad
-└── service/           # Lógica de negocio
+├── service/           # Lógica de negocio
+└── event/             # Eventos de dominio (citas, evoluciones)
 ```
 
 ---
@@ -484,7 +548,7 @@ src/main/java/com/team4/petstore/
 | PostgreSQL | 15 |
 | Flyway | - |
 | Swagger/OpenAPI | 2.8.4 |
-| Cloudinary | HTTP45 |
+| Cloudinary | HTTP API |
 
 ---
 
