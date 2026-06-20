@@ -26,7 +26,7 @@ public class InternacionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<InternacionResponse> ingresar(
             @Valid @RequestBody InternacionRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -50,7 +50,7 @@ public class InternacionController {
     }
 
     @PatchMapping("/{id}/alta")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<InternacionResponse> darDeAlta(@PathVariable Long id) {
         return ResponseEntity.ok(internacionService.darDeAlta(id));
     }

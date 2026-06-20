@@ -42,9 +42,9 @@ public class InternacionService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Mascota no encontrada con id: " + dto.getMascotaId()));
 
-        Veterinario veterinario = veterinarioRepository.findById(dto.getVeterinarioId())
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(dto.getVeterinarioId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Veterinario no encontrado con id: " + dto.getVeterinarioId()));
+                "Veterinario no encontrado para usuario id: " + dto.getVeterinarioId()));
 
         Internacion internacion = new Internacion();
         internacion.setMascota(mascota);

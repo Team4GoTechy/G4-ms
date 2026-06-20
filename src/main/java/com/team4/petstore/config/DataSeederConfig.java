@@ -2,9 +2,11 @@ package com.team4.petstore.config;
 
 import com.team4.petstore.entity.Mascota;
 import com.team4.petstore.entity.Usuario;
+import com.team4.petstore.entity.Veterinario;
 import com.team4.petstore.repository.MascotaRepository;
 import com.team4.petstore.repository.RolRepository;
 import com.team4.petstore.repository.UsuarioRepository;
+import com.team4.petstore.repository.VeterinarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -23,6 +25,7 @@ public class DataSeederConfig {
     public CommandLineRunner seedData(UsuarioRepository usuarioRepository,
                                         RolRepository rolRepository,
                                         MascotaRepository mascotaRepository,
+                                        VeterinarioRepository veterinarioRepository,
                                         PasswordEncoder passwordEncoder) {
         return args -> {
             if (usuarioRepository.count() > 0) {
@@ -44,7 +47,14 @@ public class DataSeederConfig {
             doctor.addRol(rolRepository.findByNombre("ROLE_VETERINARIO")
                 .orElseThrow(() -> new RuntimeException("ROLE_VETERINARIO not found")));
             usuarioRepository.save(doctor);
-            log.info("Created DOCTOR with ROLE_VETERINARIO: doctor@petshop.com");
+            
+            Veterinario v = new Veterinario();
+            v.setUsuario(doctor);
+            v.setMatricula("VET-12345");
+            v.setEspecialidad("Clínica General");
+            v.setBio("Doctor con más de 10 años de experiencia.");
+            veterinarioRepository.save(v);
+            log.info("Created DOCTOR with ROLE_VETERINARIO and Veterinario profile: doctor@petshop.com");
 
             Usuario cliente = crearUsuario("Cliente", "Demo", "cliente@petshop.com", encodedPassword);
             cliente.addRol(rolRepository.findByNombre("ROLE_CLIENTE")

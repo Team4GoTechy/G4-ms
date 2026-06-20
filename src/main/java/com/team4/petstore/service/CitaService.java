@@ -44,9 +44,9 @@ public class CitaService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Mascota no encontrada con id: " + dto.getMascotaId()));
 
-        Veterinario veterinario = veterinarioRepository.findById(dto.getVeterinarioId())
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(dto.getVeterinarioId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Veterinario no encontrado con id: " + dto.getVeterinarioId()));
+                "Veterinario no encontrado para el usuario id: " + dto.getVeterinarioId()));
 
         LocalDateTime inicio = dto.getFechaHora();
         LocalDateTime fin = inicio.plusMinutes(dto.getDuracionMinutos());
@@ -100,18 +100,24 @@ public class CitaService {
     }
 
     @Transactional(readOnly = true)
-    public List<CitaResponse> obtenerAgendaDelDia(Long veterinarioId, LocalDate fecha) {
+    public List<CitaResponse> obtenerAgendaDelDia(Long usuarioId, LocalDate fecha) {
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado"));
+            
         LocalDateTime inicio = fecha.atStartOfDay();
         LocalDateTime fin = fecha.atTime(LocalTime.MAX);
         return citaRepository
-            .findByVeterinarioIdAndFechaHoraBetween(veterinarioId, inicio, fin)
+            .findByVeterinarioIdAndFechaHoraBetween(veterinario.getId(), inicio, fin)
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
     
     @Transactional(readOnly = true)
-    public List<CitaResponse> obtenerAgendaDelMes(Long veterinarioId, YearMonth mes) {
+    public List<CitaResponse> obtenerAgendaDelMes(Long usuarioId, YearMonth mes) {
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado"));
+            
         LocalDate primerDia = mes.atDay(1);
         LocalDate ultimoDia = mes.atEndOfMonth();
 
@@ -119,16 +125,19 @@ public class CitaService {
         LocalDateTime fin = ultimoDia.atTime(LocalTime.MAX);
 
         return citaRepository
-            .findByVeterinarioIdAndFechaHoraBetween(veterinarioId, inicio, fin)
+            .findByVeterinarioIdAndFechaHoraBetween(veterinario.getId(), inicio, fin)
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
     
     @Transactional(readOnly = true)
-    public List<CitaResponse> obtenerTodasLasCitas(Long veterinarioId) {
+    public List<CitaResponse> obtenerTodasLasCitas(Long usuarioId) {
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(usuarioId)
+            .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado"));
+            
         return citaRepository
-            .findByVeterinarioId(veterinarioId)
+            .findByVeterinarioId(veterinario.getId())
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
@@ -141,6 +150,8 @@ public class CitaService {
         dto.setId(cita.getId());
         dto.setMascotaId(cita.getMascota().getId());
         dto.setMascotaNombre(cita.getMascota().getNombre());
+        dto.setClienteId(cita.getMascota().getUsuario().getId());
+        dto.setClienteNombre(cita.getMascota().getUsuario().getNombre());
         dto.setVeterinarioId(cita.getVeterinario().getId());
         dto.setVeterinarioNombre(cita.getVeterinario().getUsuario().getNombre());
         dto.setTipoCita(cita.getTipoCita());

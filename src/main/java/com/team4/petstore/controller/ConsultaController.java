@@ -30,7 +30,7 @@ public class ConsultaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<ConsultaResponse> registrar(
             @Valid @RequestBody ConsultaRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(consultaService.registrar(dto));
@@ -43,7 +43,7 @@ public class ConsultaController {
     }
 
     @PostMapping("/{id}/prescripcion")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<PrescripcionResponse> agregarPrescripcion(
             @PathVariable Long id,
             @Valid @RequestBody PrescripcionRequest dto,

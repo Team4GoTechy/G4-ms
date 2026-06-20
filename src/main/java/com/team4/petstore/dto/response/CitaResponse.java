@@ -10,6 +10,8 @@ public class CitaResponse {
     private String mascotaNombre;
     private Long veterinarioId;
     private String veterinarioNombre;
+    private Long clienteId;
+    private String clienteNombre;
     private TipoCita tipoCita;
     private LocalDateTime fechaHora;
     private Integer duracionMinutos;
@@ -33,6 +35,12 @@ public class CitaResponse {
 
     public String getVeterinarioNombre() { return veterinarioNombre; }
     public void setVeterinarioNombre(String veterinarioNombre) { this.veterinarioNombre = veterinarioNombre; }
+
+    public Long getClienteId() { return clienteId; }
+    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
 
     public TipoCita getTipoCita() { return tipoCita; }
     public void setTipoCita(TipoCita tipoCita) { this.tipoCita = tipoCita; }
