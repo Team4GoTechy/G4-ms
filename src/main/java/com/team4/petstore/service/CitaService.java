@@ -31,8 +31,8 @@ public class CitaService {
     private final VeterinarioRepository veterinarioRepository;
 
     public CitaService(CitaRepository citaRepository,
-                       MascotaRepository mascotaRepository,
-                       VeterinarioRepository veterinarioRepository) {
+                        MascotaRepository mascotaRepository,
+                        VeterinarioRepository veterinarioRepository) {
         this.citaRepository = citaRepository;
         this.mascotaRepository = mascotaRepository;
         this.veterinarioRepository = veterinarioRepository;
