@@ -144,7 +144,6 @@ public class CitaService {
     }
 
 
-
     private CitaResponse mapToResponse(Cita cita) {
         CitaResponse dto = new CitaResponse();
         dto.setId(cita.getId());
