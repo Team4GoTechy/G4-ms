@@ -1,6 +1,7 @@
 package com.team4.petstore.controller;
 
 import com.team4.petstore.dto.request.OrdenCompraCompletarRequest;
+import com.team4.petstore.dto.request.OrdenCompraRequest;
 import com.team4.petstore.dto.response.OrdenCompraResponse;
 import com.team4.petstore.service.OrdenCompraService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +37,18 @@ public class OrdenCompraController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrdenCompraResponse>> listar() {
         return ResponseEntity.ok(ordenService.listar());
+    }
+
+    @Operation(summary = "Crear orden de compra", description = "Crea una nueva orden de compra a un proveedor (solo ADMIN)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Orden creada correctamente"),
+        @ApiResponse(responseCode = "400", description = "Datos invalidos"),
+        @ApiResponse(responseCode = "404", description = "Proveedor o insumo no encontrado")
+    })
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrdenCompraResponse> crear(@Valid @RequestBody OrdenCompraRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ordenService.crear(request));
     }
 
     @Operation(summary = "Obtener orden de compra por ID")

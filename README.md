@@ -296,6 +296,7 @@ Al iniciar la aplicación, se crean automáticamente los siguientes usuarios:
 |--------|------|-------------|------|
 | GET | `/ordenes-compra` | Listar órdenes | ADMIN |
 | GET | `/ordenes-compra/{id}` | Ver orden | ADMIN |
+| **POST** | **`/ordenes-compra`** | **Crear orden de compra** | **ADMIN** |
 | PUT | `/ordenes-compra/{id}/completar` | Completar orden (recibe mercadería) | ADMIN |
 | PUT | `/ordenes-compra/{id}/cancelar` | Cancelar orden | ADMIN |
 
@@ -332,6 +333,21 @@ POST /solicitudes
 ```
 PUT /solicitudes/1/aprobar?proveedorId=1
 ```
+
+### Ejemplo: Crear Orden de Compra directamente
+
+```json
+POST /ordenes-compra
+{
+  "proveedorId": 1,
+  "items": [
+    { "insumoId": 1, "cantidad": 50 },
+    { "insumoId": 3, "cantidad": 30 }
+  ]
+}
+```
+
+> **Nota:** La orden se crea en estado `PENDIENTE` con precios en cero. Al completarla se actualizan precios reales y stock.
 
 ### Ejemplo: Completar Orden (con precios reales)
 

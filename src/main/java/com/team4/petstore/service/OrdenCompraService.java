@@ -1,6 +1,7 @@
 package com.team4.petstore.service;
 
 import com.team4.petstore.dto.request.OrdenCompraCompletarRequest;
+import com.team4.petstore.dto.request.OrdenCompraRequest;
 import com.team4.petstore.dto.response.OrdenCompraResponse;
 import com.team4.petstore.entity.*;
 import com.team4.petstore.exception.BadRequestException;
@@ -18,17 +19,20 @@ import java.util.stream.Collectors;
 public class OrdenCompraService {
 
     private final OrdenCompraRepository ordenRepository;
+    private final ProveedorRepository proveedorRepository;
     private final InsumoRepository insumoRepository;
     private final StockInsumoRepository stockRepository;
     private final MovimientoInsumoRepository movimientoRepository;
     private final MovimientoInsumoService movimientoService;
 
     public OrdenCompraService(OrdenCompraRepository ordenRepository,
+                             ProveedorRepository proveedorRepository,
                              InsumoRepository insumoRepository,
                              StockInsumoRepository stockRepository,
                              MovimientoInsumoRepository movimientoRepository,
                              MovimientoInsumoService movimientoService) {
         this.ordenRepository = ordenRepository;
+        this.proveedorRepository = proveedorRepository;
         this.insumoRepository = insumoRepository;
         this.stockRepository = stockRepository;
         this.movimientoRepository = movimientoRepository;
@@ -39,6 +43,30 @@ public class OrdenCompraService {
         return ordenRepository.findAllWithDetallesAndProveedor().stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public OrdenCompraResponse crear(@NonNull OrdenCompraRequest request) {
+        Proveedor proveedor = proveedorRepository.findByIdAndActivoTrue(request.getProveedorId())
+            .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con id: " + request.getProveedorId()));
+
+        OrdenCompra orden = new OrdenCompra();
+        orden.setProveedor(proveedor);
+        orden.setEstado(EstadoOrdenCompra.PENDIENTE);
+
+        for (OrdenCompraRequest.OrdenItemRequest itemRequest : request.getItems()) {
+            Insumo insumo = insumoRepository.findByIdAndActivoTrue(itemRequest.getInsumoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Insumo no encontrado con id: " + itemRequest.getInsumoId()));
+
+            DetalleOrdenCompra detalle = new DetalleOrdenCompra();
+            detalle.setInsumo(insumo);
+            detalle.setCantidad(itemRequest.getCantidad());
+            detalle.setPrecioUnitario(BigDecimal.ZERO);
+            orden.addDetalle(detalle);
+        }
+
+        orden = ordenRepository.save(orden);
+        return toResponse(orden);
     }
 
     public OrdenCompraResponse obtenerPorId(@NonNull Long id) {
