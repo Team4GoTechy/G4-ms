@@ -14,19 +14,26 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import com.team4.petstore.entity.Usuario;
+import com.team4.petstore.repository.UsuarioRepository;
+import com.team4.petstore.exception.ResourceNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @RestController
 @RequestMapping("/api/v1/citas")
 public class CitaController {
 
     private final CitaService citaService;
+    private final UsuarioRepository usuarioRepository;
 
-    public CitaController(CitaService citaService) {
+    public CitaController(CitaService citaService, UsuarioRepository usuarioRepository) {
         this.citaService = citaService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ROLE_CLIENTE', 'ADMIN', 'VETERINARIO', 'DOCTOR', 'CLIENTE')")
     public ResponseEntity<CitaResponse> crear(@Valid @RequestBody CitaRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(citaService.crear(dto));
     }
@@ -38,7 +45,7 @@ public class CitaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ROLE_CLIENTE', 'ADMIN', 'VETERINARIO', 'DOCTOR', 'CLIENTE')")
     public ResponseEntity<List<CitaResponse>> obtenerAgenda(
             @RequestParam Long veterinarioId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
@@ -66,5 +73,20 @@ public class CitaController {
             @PathVariable Long id,
             @Valid @RequestBody EstadoCitaRequest dto) {
         return ResponseEntity.ok(citaService.actualizarEstado(id, dto));
+    }
+
+    @GetMapping("/mis-citas")
+    @PreAuthorize("hasAnyRole('ROLE_CLIENTE', 'CLIENTE')")
+    public ResponseEntity<List<CitaResponse>> obtenerMisCitas(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername())
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        return ResponseEntity.ok(citaService.obtenerCitasCliente(usuario.getId()));
+    }
+
+    @PatchMapping("/{id}/pagar")
+    @PreAuthorize("hasAnyRole('ROLE_CLIENTE', 'CLIENTE')")
+    public ResponseEntity<CitaResponse> pagarCita(@PathVariable Long id) {
+        return ResponseEntity.ok(citaService.pagarCita(id));
     }
 }

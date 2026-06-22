@@ -2,6 +2,7 @@ package com.team4.petstore.service;
 
 import com.team4.petstore.dto.request.EvolucionRequest;
 import com.team4.petstore.dto.request.InternacionRequest;
+import com.team4.petstore.dto.request.ReingresoRequest;
 import com.team4.petstore.dto.response.EvolucionResponse;
 import com.team4.petstore.dto.response.InternacionResponse;
 import com.team4.petstore.entity.*;
@@ -23,17 +24,20 @@ public class InternacionService {
     private final MascotaRepository mascotaRepository;
     private final VeterinarioRepository veterinarioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
 
     public InternacionService(InternacionRepository internacionRepository,
                               EvolucionInternacionRepository evolucionRepository,
                               MascotaRepository mascotaRepository,
                               VeterinarioRepository veterinarioRepository,
-                              UsuarioRepository usuarioRepository) {
+                              UsuarioRepository usuarioRepository,
+                              NotificacionService notificacionService) {
         this.internacionRepository = internacionRepository;
         this.evolucionRepository = evolucionRepository;
         this.mascotaRepository = mascotaRepository;
         this.veterinarioRepository = veterinarioRepository;
         this.usuarioRepository = usuarioRepository;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional
@@ -54,7 +58,20 @@ public class InternacionService {
         internacion.setNotas(dto.getNotas());
         internacion.setEstado(EstadoInternacion.ACTIVA);
 
-        return mapToResponse(internacionRepository.save(internacion));
+        Internacion guardada = internacionRepository.save(internacion);
+
+        try {
+            notificacionService.crearNotificacion(
+                mascota.getUsuario(),
+                "Ingreso a Internación",
+                "Tu mascota " + mascota.getNombre() + " ha ingresado a internación. Motivo: " + dto.getMotivo() + ".",
+                "sistema"
+            );
+        } catch (Exception e) {
+            System.err.println("Error al notificar ingreso a internación: " + e.getMessage());
+        }
+
+        return mapToResponse(guardada);
     }
 
     @Transactional
@@ -81,14 +98,29 @@ public class InternacionService {
     }
 
     @Transactional
-    public InternacionResponse darDeAlta(Long internacionId) {
+    public InternacionResponse darDeAlta(Long internacionId, String indicacionesAlta) {
         Internacion internacion = internacionRepository.findById(internacionId)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Internación no encontrada con id: " + internacionId));
 
         internacion.setEstado(EstadoInternacion.ALTA);
         internacion.setFechaAlta(LocalDateTime.now());
-        return mapToResponse(internacionRepository.save(internacion));
+        internacion.setIndicacionesAlta(indicacionesAlta);
+
+        Internacion guardada = internacionRepository.save(internacion);
+
+        try {
+            notificacionService.crearNotificacion(
+                guardada.getMascota().getUsuario(),
+                "Alta de Internación",
+                "¡Buenas noticias! Tu mascota " + guardada.getMascota().getNombre() + " ha sido dada de alta. Indicaciones: " + indicacionesAlta,
+                "sistema"
+            );
+        } catch (Exception e) {
+            System.err.println("Error al notificar alta de internación: " + e.getMessage());
+        }
+
+        return mapToResponse(guardada);
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +130,89 @@ public class InternacionService {
             resultado.add(mapToResponse(i));
         }
         return resultado;
+    }
+
+    @Transactional(readOnly = true)
+    public List<InternacionResponse> listarPendientesReingreso() {
+        List<InternacionResponse> resultado = new ArrayList<>();
+        for (Internacion i : internacionRepository.findByEstado(EstadoInternacion.REINGRESO_SOLICITADO)) {
+            resultado.add(mapToResponse(i));
+        }
+        return resultado;
+    }
+
+    @Transactional(readOnly = true)
+    public List<InternacionResponse> obtenerPorMascota(Long mascotaId) {
+        List<InternacionResponse> resultado = new ArrayList<>();
+        for (Internacion i : internacionRepository.findByMascotaId(mascotaId)) {
+            resultado.add(mapToResponse(i));
+        }
+        return resultado;
+    }
+
+    @Transactional
+    public InternacionResponse solicitarReingreso(ReingresoRequest dto, String emailCliente) {
+        Mascota mascota = mascotaRepository.findById(dto.getMascotaId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Mascota no encontrada con id: " + dto.getMascotaId()));
+
+        Usuario cliente = usuarioRepository.findByEmail(emailCliente)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (!mascota.getUsuario().getId().equals(cliente.getId())) {
+            throw new IllegalArgumentException("La mascota no pertenece al usuario autenticado");
+        }
+
+        Veterinario veterinario = null;
+        List<Internacion> previous = internacionRepository.findByMascotaId(mascota.getId());
+        if (!previous.isEmpty()) {
+            veterinario = previous.get(previous.size() - 1).getVeterinario();
+        } else {
+            List<Veterinario> vets = veterinarioRepository.findAll();
+            if (!vets.isEmpty()) {
+                veterinario = vets.get(0);
+            } else {
+                throw new ResourceNotFoundException("No hay veterinarios registrados en el sistema");
+            }
+        }
+
+        Internacion internacion = new Internacion();
+        internacion.setMascota(mascota);
+        internacion.setVeterinario(veterinario);
+        internacion.setNotasCliente(dto.getNotasCliente());
+        internacion.setMotivo("Reingreso Solicitado por Propietario: " + dto.getNotasCliente());
+        internacion.setEstado(EstadoInternacion.REINGRESO_SOLICITADO);
+        internacion.setFechaIngreso(LocalDateTime.now());
+
+        return mapToResponse(internacionRepository.save(internacion));
+    }
+
+    @Transactional
+    public InternacionResponse confirmarReingreso(Long id, String jaulaId) {
+        Internacion internacion = internacionRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Internación no encontrada con id: " + id));
+
+        if (internacion.getEstado() != EstadoInternacion.REINGRESO_SOLICITADO) {
+            throw new IllegalStateException("La internación no está en estado de reingreso solicitado");
+        }
+
+        internacion.setEstado(EstadoInternacion.ACTIVA);
+        internacion.setJaulaId(jaulaId);
+        internacion.setFechaIngreso(LocalDateTime.now());
+
+        Internacion guardada = internacionRepository.save(internacion);
+
+        try {
+            notificacionService.crearNotificacion(
+                guardada.getMascota().getUsuario(),
+                "Reingreso Confirmado",
+                "El reingreso solicitado para tu mascota " + guardada.getMascota().getNombre() + " ha sido confirmado en la jaula " + jaulaId + ".",
+                "sistema"
+            );
+        } catch (Exception e) {
+            System.err.println("Error al notificar confirmación de reingreso: " + e.getMessage());
+        }
+
+        return mapToResponse(guardada);
     }
 
     private InternacionResponse mapToResponse(Internacion i) {
@@ -113,6 +228,8 @@ public class InternacionService {
         dto.setJaulaId(i.getJaulaId());
         dto.setEstado(i.getEstado());
         dto.setNotas(i.getNotas());
+        dto.setIndicacionesAlta(i.getIndicacionesAlta());
+        dto.setNotasCliente(i.getNotasCliente());
 
         List<EvolucionResponse> evolucionesDto = new ArrayList<>();
         for (EvolucionInternacion e : i.getEvoluciones()) {

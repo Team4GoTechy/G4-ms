@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public class DetallePrescripcionRequest {
 
-    @NotNull(message = "El producto es obligatorio")
-    private Long productoId;
+    @NotNull(message = "El insumo es obligatorio")
+    private Long insumoId;
 
     @NotBlank(message = "La dosis es obligatoria")
     private String dosis;
@@ -22,8 +22,8 @@ public class DetallePrescripcionRequest {
 
     public DetallePrescripcionRequest() {}
 
-    public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
+    public Long getInsumoId() { return insumoId; }
+    public void setInsumoId(Long insumoId) { this.insumoId = insumoId; }
 
     public String getDosis() { return dosis; }
     public void setDosis(String dosis) { this.dosis = dosis; }

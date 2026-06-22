@@ -65,6 +65,18 @@ public class CategoriaController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Actualizar categoría", description = "Actualiza una categoría existente")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Categoría actualizada correctamente"),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos"),
+        @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<Categoria> actualizar(@PathVariable @NonNull Long id, @RequestBody @NonNull CategoriaRequest request) {
+        Categoria categoria = categoriaService.actualizar(id, request.getNombre(), request.getDescripcion());
+        return ResponseEntity.ok(categoria);
+    }
+
     public static class CategoriaRequest {
         private String nombre;
         private String descripcion;

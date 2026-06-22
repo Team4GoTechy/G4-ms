@@ -17,7 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/usuario")
@@ -99,6 +102,30 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/list")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UsuarioPerfilResponse>> listarTodos() {
+        List<UsuarioPerfilResponse> list = usuarioService.listarTodos()
+            .stream()
+            .map(usuario -> {
+                Set<String> roles = usuario.getRoles().stream()
+                    .map(com.team4.petstore.entity.Rol::getNombre)
+                    .collect(Collectors.toSet());
+                return new UsuarioPerfilResponse(
+                    usuario.getId(),
+                    usuario.getNombre(),
+                    usuario.getApellido(),
+                    usuario.getEmail(),
+                    usuario.getAvatar(),
+                    usuario.getDireccion(),
+                    usuario.getCelular(),
+                    roles
+                );
+            })
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
+    }
+
     private Long getUsuarioId(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername())
@@ -114,6 +141,7 @@ public class UsuarioController {
         private String avatar;
         private String direccion;
         private String celular;
+        private Set<String> roles;
 
         public UsuarioPerfilResponse(Long id, String nombre, String apellido, String email,
                                     String avatar, String direccion, String celular) {
@@ -126,6 +154,12 @@ public class UsuarioController {
             this.celular = celular;
         }
 
+        public UsuarioPerfilResponse(Long id, String nombre, String apellido, String email,
+                                    String avatar, String direccion, String celular, Set<String> roles) {
+            this(id, nombre, apellido, email, avatar, direccion, celular);
+            this.roles = roles;
+        }
+
         public Long getId() { return id; }
         public String getNombre() { return nombre; }
         public String getApellido() { return apellido; }
@@ -133,5 +167,6 @@ public class UsuarioController {
         public String getAvatar() { return avatar; }
         public String getDireccion() { return direccion; }
         public String getCelular() { return celular; }
+        public Set<String> getRoles() { return roles; }
     }
 }

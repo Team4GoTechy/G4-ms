@@ -43,4 +43,15 @@ public class CategoriaService {
             .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
         categoriaRepository.delete(categoria);
     }
+
+    @Transactional
+    public Categoria actualizar(@NonNull Long id, @NonNull String nombre, String descripcion) {
+        Categoria categoria = obtenerPorId(id);
+        if (!categoria.getNombre().equalsIgnoreCase(nombre) && categoriaRepository.existsByNombre(nombre)) {
+            throw new BadRequestException("La categoría ya existe: " + nombre);
+        }
+        categoria.setNombre(nombre);
+        categoria.setDescripcion(descripcion);
+        return categoriaRepository.save(categoria);
+    }
 }

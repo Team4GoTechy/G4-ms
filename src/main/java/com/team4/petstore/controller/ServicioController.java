@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/servicios")
-@PreAuthorize("hasRole('ADMIN')")
 public class ServicioController {
 
     private final ServicioService servicioService;
@@ -35,13 +34,26 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.obtenerTodosLosVeterinarios());
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ROLE_CLIENTE', 'ADMIN', 'VETERINARIO', 'DOCTOR', 'CLIENTE')")
+    public ResponseEntity<List<ServicioResponse>> listarTodos() {
+        return ResponseEntity.ok(servicioService.listarTodos());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ServicioResponse> actualizar(@PathVariable Long id, @Valid @RequestBody ServicioRequest dto) {
+        return ResponseEntity.ok(servicioService.actualizar(id, dto));
+    }
 
     @GetMapping("/veterinario/{veterinarioId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ROLE_CLIENTE', 'ADMIN', 'VETERINARIO', 'DOCTOR', 'CLIENTE')")
     public ResponseEntity<List<ServicioResponse>> listarPorVeterinario(@PathVariable Long veterinarioId) {
         return ResponseEntity.ok(servicioService.listarPorVeterinario(veterinarioId));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         servicioService.eliminar(id);
         return ResponseEntity.noContent().build();

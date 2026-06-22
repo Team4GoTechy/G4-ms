@@ -28,7 +28,7 @@ public class VeterinarioController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ROLE_CLIENTE', 'ADMIN', 'VETERINARIO', 'DOCTOR', 'CLIENTE')")
     public ResponseEntity<List<VeterinarioResponse>> listarTodos() {
         return ResponseEntity.ok(veterinarioService.listarTodos());
     }

@@ -50,11 +50,13 @@ public class ServicioService {
             .stream()
             .map(v -> new VeterinarioResponse(
                 v.getId(),
+                v.getUsuario().getId(),
                 v.getUsuario().getNombre(),
                 v.getMatricula(),
                 v.getEspecialidad(),
                 v.getBio(),
-                v.getActivo()
+                v.getActivo(),
+                v.getUsuario().getAvatar()
             ))
             .collect(Collectors.toList());
     }
@@ -62,10 +64,36 @@ public class ServicioService {
 
     @Transactional(readOnly = true)
     public List<ServicioResponse> listarPorVeterinario(Long veterinarioId) {
-        return servicioRepository.findByVeterinarioId(veterinarioId)
+        return servicioRepository.findByVeterinariosId(veterinarioId)
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServicioResponse> listarTodos() {
+        return servicioRepository.findAll()
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ServicioResponse actualizar(Long id, ServicioRequest dto) {
+        Servicio servicio = servicioRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + id));
+
+        List<Veterinario> veterinarios = veterinarioRepository.findAllById(dto.getVeterinarioIds());
+        if (veterinarios.isEmpty()) {
+            throw new ResourceNotFoundException("No se encontraron veterinarios para los IDs proporcionados");
+        }
+
+        servicio.setNombre(dto.getNombre());
+        servicio.setDescripcion(dto.getDescripcion());
+        servicio.setPrecio(dto.getPrecio());
+        servicio.setVeterinarios(veterinarios);
+
+        return mapToResponse(servicioRepository.save(servicio));
     }
 
     @Transactional
@@ -78,11 +106,13 @@ public class ServicioService {
             .stream()
             .map(v -> new VeterinarioResponse(
                 v.getId(),
+                v.getUsuario().getId(),
                 v.getUsuario().getNombre(),
                 v.getMatricula(),
                 v.getEspecialidad(),
                 v.getBio(),
-                v.getActivo()
+                v.getActivo(),
+                v.getUsuario().getAvatar()
             ))
             .collect(Collectors.toList());
 

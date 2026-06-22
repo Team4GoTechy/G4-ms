@@ -130,6 +130,7 @@ public class AuthService {
                     mascotaRequest.getTipo(),
                     usuario
                 );
+                mascota.setRaza(mascotaRequest.getRaza());
                 usuario.addMascota(mascota);
             }
             usuario = usuarioRepository.save(usuario);
@@ -161,5 +162,9 @@ public class AuthService {
         }
 
         return response;
+    }
+
+    public boolean existsByEmail(String email) {
+        return usuarioRepository.existsByEmail(email);
     }
 }

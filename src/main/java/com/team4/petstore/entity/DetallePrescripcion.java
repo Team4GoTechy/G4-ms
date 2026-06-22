@@ -15,8 +15,8 @@ public class DetallePrescripcion {
     private Prescripcion prescripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
-    private Producto producto;
+    @JoinColumn(name = "insumo_id", nullable = false)
+    private Insumo insumo;
 
     @Column(length = 100)
     private String dosis;
@@ -41,8 +41,8 @@ public class DetallePrescripcion {
     public Prescripcion getPrescripcion() { return prescripcion; }
     public void setPrescripcion(Prescripcion prescripcion) { this.prescripcion = prescripcion; }
 
-    public Producto getProducto() { return producto; }
-    public void setProducto(Producto producto) { this.producto = producto; }
+    public Insumo getInsumo() { return insumo; }
+    public void setInsumo(Insumo insumo) { this.insumo = insumo; }
 
     public String getDosis() { return dosis; }
     public void setDosis(String dosis) { this.dosis = dosis; }

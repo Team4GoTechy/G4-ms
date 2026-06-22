@@ -3,8 +3,8 @@ package com.team4.petstore.dto.response;
 public class DetallePrescripcionResponse {
 
     private Long id;
-    private Long productoId;
-    private String productoNombre;
+    private Long insumoId;
+    private String insumoNombre;
     private String dosis;
     private String frecuencia;
     private String duracion;
@@ -16,11 +16,11 @@ public class DetallePrescripcionResponse {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
+    public Long getInsumoId() { return insumoId; }
+    public void setInsumoId(Long insumoId) { this.insumoId = insumoId; }
 
-    public String getProductoNombre() { return productoNombre; }
-    public void setProductoNombre(String productoNombre) { this.productoNombre = productoNombre; }
+    public String getInsumoNombre() { return insumoNombre; }
+    public void setInsumoNombre(String insumoNombre) { this.insumoNombre = insumoNombre; }
 
     public String getDosis() { return dosis; }
     public void setDosis(String dosis) { this.dosis = dosis; }

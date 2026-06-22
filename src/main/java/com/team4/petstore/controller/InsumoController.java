@@ -32,7 +32,7 @@ public class InsumoController {
         @ApiResponse(responseCode = "200", description = "Lista de insumos obtenida correctamente")
     })
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<List<InsumoResponse>> listar() {
         return ResponseEntity.ok(insumoService.listar());
     }
@@ -43,7 +43,7 @@ public class InsumoController {
         @ApiResponse(responseCode = "404", description = "Insumo no encontrado")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<InsumoResponse> obtenerPorId(
             @Parameter(description = "ID del insumo") @PathVariable Long id) {
         return ResponseEntity.ok(insumoService.obtenerPorId(id));

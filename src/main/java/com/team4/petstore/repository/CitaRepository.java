@@ -16,14 +16,13 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     List<Cita> findByVeterinarioIdAndFechaHoraBetween(
         Long veterinarioId, LocalDateTime inicio, LocalDateTime fin);
 
-    List<Cita> findByVeterinarioId(Long veterinarioId);
-
     Page<Cita> findByMascotaId(Long mascotaId, Pageable pageable);
+
+    List<Cita> findByMascotaUsuarioIdOrderByFechaHoraDesc(Long usuarioId);
 
     List<Cita> findByEstadoAndFechaHoraBetween(
         EstadoCita estado, LocalDateTime inicio, LocalDateTime fin);
     
-    List<Cita> findByVeterinarioId(Long veterinarioId);
 
     // Valida solapamiento de horario para el mismo veterinario.
     // excluirCitaId se usa al reagendar (para no chocar contra sí misma); en creación se pasa null.

@@ -6,13 +6,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class VeterinarioResponse {
 
     private Long id;
+    private Long usuarioId;
     private String nombreUsuario;
     private String matricula;
     private String especialidad;
     private String bio;
     private Boolean activo;
+    private String avatar;
 
     public VeterinarioResponse() {}
+
+    public VeterinarioResponse(Long id, Long usuarioId, String nombreUsuario, String matricula,
+                               String especialidad, String bio, Boolean activo, String avatar) {
+        this.setId(id);
+        this.setUsuarioId(usuarioId);
+        this.setNombreUsuario(nombreUsuario);
+        this.setMatricula(matricula);
+        this.setEspecialidad(especialidad);
+        this.setBio(bio);
+        this.setActivo(activo);
+        this.setAvatar(avatar);
+    }
 
     public VeterinarioResponse(Long id, String nombreUsuario, String matricula,
                                String especialidad, String bio, Boolean activo) {
@@ -30,6 +44,14 @@ public class VeterinarioResponse {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public Long getUsuarioId() {
+		return usuarioId;
+	}
+
+	public void setUsuarioId(Long usuarioId) {
+		this.usuarioId = usuarioId;
 	}
 
 	public String getNombreUsuario() {
@@ -70,5 +92,13 @@ public class VeterinarioResponse {
 
 	public void setActivo(Boolean activo) {
 		this.activo = activo;
+	}
+
+	public String getAvatar() {
+		return avatar;
+	}
+
+	public void setAvatar(String avatar) {
+		this.avatar = avatar;
 	}
 }

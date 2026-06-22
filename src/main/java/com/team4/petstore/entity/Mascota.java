@@ -20,6 +20,15 @@ public class Mascota {
     @Column(nullable = false, length = 20)
     private String tipo; // "Gato" o "Perro"
 
+    @Column(length = 100)
+    private String raza;
+
+    @Column(name = "fecha_nacimiento", length = 30)
+    private String fechaNacimiento;
+
+    @Column
+    private Double peso;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -44,6 +53,16 @@ public class Mascota {
     public void setSexo(String sexo) { this.sexo = sexo; }
     public String getTipo() { return tipo; }
     public void setTipo(String tipo) { this.tipo = tipo; }
+    
+    public String getRaza() { return raza; }
+    public void setRaza(String raza) { this.raza = raza; }
+
+    public String getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+
+    public Double getPeso() { return peso; }
+    public void setPeso(Double peso) { this.peso = peso; }
+
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

@@ -44,6 +44,9 @@ public class Producto {
     @Column(name = "imagen_url", length = 500)
     private String imagenUrl;
 
+    @Column(name = "peso_kg")
+    private Double pesoKg;
+
     public Producto() {}
 
     public Long getId() { return id; }
@@ -68,4 +71,6 @@ public class Producto {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public Double getPesoKg() { return pesoKg; }
+    public void setPesoKg(Double pesoKg) { this.pesoKg = pesoKg; }
 }

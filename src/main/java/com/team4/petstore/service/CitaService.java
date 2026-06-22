@@ -12,6 +12,7 @@ import com.team4.petstore.exception.CitaSolapadaException;
 import com.team4.petstore.exception.ResourceNotFoundException;
 import com.team4.petstore.repository.CitaRepository;
 import com.team4.petstore.repository.MascotaRepository;
+import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.repository.VeterinarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,19 @@ public class CitaService {
     private final CitaRepository citaRepository;
     private final MascotaRepository mascotaRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
 
     public CitaService(CitaRepository citaRepository,
                         MascotaRepository mascotaRepository,
-                        VeterinarioRepository veterinarioRepository) {
+                        VeterinarioRepository veterinarioRepository,
+                        UsuarioRepository usuarioRepository,
+                        NotificacionService notificacionService) {
         this.citaRepository = citaRepository;
         this.mascotaRepository = mascotaRepository;
         this.veterinarioRepository = veterinarioRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional
@@ -51,6 +58,10 @@ public class CitaService {
         LocalDateTime inicio = dto.getFechaHora();
         LocalDateTime fin = inicio.plusMinutes(dto.getDuracionMinutos());
 
+        if (inicio.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("La cita no puede ser programada en el pasado");
+        }
+
         if (citaRepository.existeSolapamiento(veterinario.getId(), inicio, fin, null)) {
             throw new CitaSolapadaException(
                 "El veterinario ya tiene una cita en ese horario");
@@ -65,7 +76,20 @@ public class CitaService {
         cita.setNotas(dto.getNotas());
         cita.setEstado(EstadoCita.PENDIENTE);
 
-        return mapToResponse(citaRepository.save(cita));
+        Cita guardada = citaRepository.save(cita);
+
+        try {
+            notificacionService.crearNotificacion(
+                mascota.getUsuario(),
+                "Nuevo Turno Solicitado",
+                "Se ha solicitado un turno de tipo " + dto.getTipoCita() + " para tu mascota " + mascota.getNombre() + " con el doctor " + veterinario.getUsuario().getNombre() + " para el " + inicio.getDayOfMonth() + "/" + inicio.getMonthValue() + " a las " + inicio.toLocalTime() + " hs.",
+                "sistema"
+            );
+        } catch (Exception e) {
+            System.err.println("Error al notificar nueva cita: " + e.getMessage());
+        }
+
+        return mapToResponse(guardada);
     }
     
     @Transactional(readOnly = true)
@@ -81,14 +105,50 @@ public class CitaService {
             .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CitaResponse> obtenerCitasCliente(Long clienteUsuarioId) {
+        return citaRepository.findByMascotaUsuarioIdOrderByFechaHoraDesc(clienteUsuarioId)
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
     @Transactional
     public CitaResponse actualizarEstado(Long citaId, EstadoCitaRequest dto) {
         Cita cita = citaRepository.findById(citaId)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Cita no encontrada con id: " + citaId));
 
+        EstadoCita anterior = cita.getEstado();
         cita.setEstado(dto.getEstado());
-        return mapToResponse(citaRepository.save(cita));
+        Cita guardada = citaRepository.save(cita);
+
+        if (anterior != dto.getEstado()) {
+            try {
+                String descEstado = dto.getEstado().toString();
+                String titulo = "Estado de Turno Actualizado";
+                if (dto.getEstado() == EstadoCita.CONFIRMADA) {
+                    titulo = "Turno Confirmado";
+                    descEstado = "ha sido confirmado por el doctor";
+                } else if (dto.getEstado() == EstadoCita.CANCELADA) {
+                    titulo = "Turno Cancelado";
+                    descEstado = "ha sido cancelado";
+                } else {
+                    descEstado = "ha cambiado al estado: " + descEstado;
+                }
+
+                notificacionService.crearNotificacion(
+                    guardada.getMascota().getUsuario(),
+                    titulo,
+                    "Tu turno para " + guardada.getMascota().getNombre() + " programado para el " + guardada.getFechaHora().getDayOfMonth() + "/" + guardada.getFechaHora().getMonthValue() + " " + descEstado + ".",
+                    "sistema"
+                );
+            } catch (Exception e) {
+                System.err.println("Error al notificar actualización de cita: " + e.getMessage());
+            }
+        }
+
+        return mapToResponse(guardada);
     }
 
     @Transactional(readOnly = true)
@@ -143,6 +203,14 @@ public class CitaService {
             .collect(Collectors.toList());
     }
 
+    @Transactional
+    public CitaResponse pagarCita(Long id) {
+        Cita cita = citaRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Cita no encontrada con id: " + id));
+        cita.setPagado(true);
+        Cita guardada = citaRepository.save(cita);
+        return mapToResponse(guardada);
+    }
 
     private CitaResponse mapToResponse(Cita cita) {
         CitaResponse dto = new CitaResponse();
@@ -153,12 +221,14 @@ public class CitaService {
         dto.setClienteNombre(cita.getMascota().getUsuario().getNombre());
         dto.setVeterinarioId(cita.getVeterinario().getId());
         dto.setVeterinarioNombre(cita.getVeterinario().getUsuario().getNombre());
+        dto.setVeterinarioAvatar(cita.getVeterinario().getUsuario().getAvatar());
         dto.setTipoCita(cita.getTipoCita());
         dto.setFechaHora(cita.getFechaHora());
         dto.setDuracionMinutos(cita.getDuracionMinutos());
         dto.setEstado(cita.getEstado());
         dto.setNotas(cita.getNotas());
         dto.setFechaCreacion(cita.getFechaCreacion());
+        dto.setPagado(cita.getPagado());
         return dto;
     }
 }

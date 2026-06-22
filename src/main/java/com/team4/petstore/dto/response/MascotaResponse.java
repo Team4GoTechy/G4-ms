@@ -17,6 +17,15 @@ public class MascotaResponse {
     @Schema(description = "Tipo de mascota", example = "Perro")
     private String tipo;
 
+    @Schema(description = "Raza de la mascota", example = "Caniche")
+    private String raza;
+
+    @Schema(description = "Fecha de nacimiento", example = "2024-10-12")
+    private String fechaNacimiento;
+
+    @Schema(description = "Peso de la mascota en kg", example = "4.5")
+    private Double peso;
+
     public MascotaResponse() {}
 
     public MascotaResponse(Long id, String nombre, String sexo, String tipo) {
@@ -24,6 +33,16 @@ public class MascotaResponse {
         this.nombre = nombre;
         this.sexo = sexo;
         this.tipo = tipo;
+    }
+
+    public MascotaResponse(Long id, String nombre, String sexo, String tipo, String raza, String fechaNacimiento, Double peso) {
+        this.id = id;
+        this.nombre = nombre;
+        this.sexo = sexo;
+        this.tipo = tipo;
+        this.raza = raza;
+        this.fechaNacimiento = fechaNacimiento;
+        this.peso = peso;
     }
 
     public Long getId() { return id; }
@@ -37,4 +56,13 @@ public class MascotaResponse {
 
     public String getTipo() { return tipo; }
     public void setTipo(String tipo) { this.tipo = tipo; }
+
+    public String getRaza() { return raza; }
+    public void setRaza(String raza) { this.raza = raza; }
+
+    public String getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+
+    public Double getPeso() { return peso; }
+    public void setPeso(Double peso) { this.peso = peso; }
 }

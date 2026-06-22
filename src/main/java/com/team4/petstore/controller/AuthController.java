@@ -52,4 +52,10 @@ public class AuthController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @Operation(summary = "Verificar disponibilidad de email")
+    @GetMapping("/check-email")
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
+        return ResponseEntity.ok(authService.existsByEmail(email));
+    }
 }
