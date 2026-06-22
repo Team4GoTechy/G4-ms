@@ -93,6 +93,16 @@ public class CompraService {
             .collect(Collectors.toList());
     }
 
+    public List<CompraResponse> obtenerHistorialPorUsuario(Long usuarioId) {
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new ResourceNotFoundException("Usuario no encontrado con id: " + usuarioId);
+        }
+        List<Compra> compras = compraRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
+        return compras.stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
     @Transactional
     public CompraResponse updateEstado(Long compraId, String nuevoEstado) {
         Compra compra = compraRepository.findByIdWithDetalles(compraId)

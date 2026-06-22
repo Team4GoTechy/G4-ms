@@ -15,4 +15,7 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     @Query("SELECT c FROM Compra c JOIN FETCH c.detalles d JOIN FETCH d.producto WHERE c.id = :id")
     @org.springframework.data.jpa.repository.Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Compra> findByIdWithDetalles(@Param("id") Long id);
+
+    @Query("SELECT c FROM Compra c JOIN FETCH c.detalles d JOIN FETCH d.producto WHERE c.usuario.id = :usuarioId ORDER BY c.fecha DESC")
+    List<Compra> findByUsuarioIdOrderByFechaDesc(@Param("usuarioId") Long usuarioId);
 }

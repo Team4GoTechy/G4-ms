@@ -253,7 +253,8 @@ Al iniciar la aplicación, se crean automáticamente los siguientes usuarios:
 
 | Método | Ruta | Descripción | Auth |
 |--------|------|-------------|------|
-| GET | `/compras` | Historial de compras | CLIENTE |
+| GET | `/compras` | Historial de compras del usuario autenticado | CLIENTE |
+| GET | `/compras/usuario/{usuarioId}` | Historial de compras de un usuario específico | ADMIN |
 | POST | `/compras` | Crear compra | CLIENTE |
 | PUT | `/compras/{id}/estado?estado=` | Cambiar estado | ADMIN |
 

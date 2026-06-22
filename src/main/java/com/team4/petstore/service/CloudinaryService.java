@@ -49,6 +49,7 @@ public class CloudinaryService {
         params.put("overwrite", true);
         params.put("transformation", buildTransformation(width, height));
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
 
         return (String) uploadResult.get("secure_url");
