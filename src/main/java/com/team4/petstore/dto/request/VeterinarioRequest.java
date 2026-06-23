@@ -1,6 +1,5 @@
 package com.team4.petstore.dto.request;
 
-import com.team4.petstore.entity.enums.TipoCita;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -45,9 +44,9 @@ public class VeterinarioRequest {
     @Schema(description = "Biografía presentacion del veterinario (opcional)", example = "Médico veterinario con más de 10 años de experiencia en...")
     private String bio;
 
-    @Schema(description = "Servicios habilitados para este veterinario", example = "[\"CONSULTA\", \"VACUNACION\", \"CIRUGIA\"]")
-    @NotEmpty(message = "Debe seleccionar al menos un servicio")
-    private Set<TipoCita> serviciosHabilitados;
+    @Schema(description = "IDs de los servicios que este veterinario puede ofrecer", example = "[1, 2, 3]")
+    @NotEmpty(message = "Debe asignar al menos un servicio")
+    private Set<Long> servicioIds;
 
     public VeterinarioRequest() {}
 
@@ -75,6 +74,6 @@ public class VeterinarioRequest {
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
 
-    public Set<TipoCita> getServiciosHabilitados() { return serviciosHabilitados; }
-    public void setServiciosHabilitados(Set<TipoCita> serviciosHabilitados) { this.serviciosHabilitados = serviciosHabilitados; }
+    public Set<Long> getServicioIds() { return servicioIds; }
+    public void setServicioIds(Set<Long> servicioIds) { this.servicioIds = servicioIds; }
 }

@@ -4,15 +4,19 @@ import com.team4.petstore.dto.request.CitaRequest;
 import com.team4.petstore.dto.request.EstadoCitaRequest;
 import com.team4.petstore.dto.response.CitaResponse;
 import com.team4.petstore.dto.response.MascotaResponse;
+import com.team4.petstore.dto.response.ServicioResponse;
 import com.team4.petstore.entity.Cita;
 import com.team4.petstore.entity.Mascota;
+import com.team4.petstore.entity.Servicio;
 import com.team4.petstore.entity.Veterinario;
 import com.team4.petstore.entity.enums.EstadoCita;
 import com.team4.petstore.entity.enums.TipoNotificacion;
+import com.team4.petstore.exception.BadRequestException;
 import com.team4.petstore.exception.CitaSolapadaException;
 import com.team4.petstore.exception.ResourceNotFoundException;
 import com.team4.petstore.repository.CitaRepository;
 import com.team4.petstore.repository.MascotaRepository;
+import com.team4.petstore.repository.ServicioRepository;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.repository.VeterinarioRepository;
 import org.springframework.stereotype.Service;
@@ -31,17 +35,20 @@ public class CitaService {
     private final CitaRepository citaRepository;
     private final MascotaRepository mascotaRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final ServicioRepository servicioRepository;
     private final UsuarioRepository usuarioRepository;
     private final NotificacionService notificacionService;
 
     public CitaService(CitaRepository citaRepository,
                         MascotaRepository mascotaRepository,
                         VeterinarioRepository veterinarioRepository,
+                        ServicioRepository servicioRepository,
                         UsuarioRepository usuarioRepository,
                         NotificacionService notificacionService) {
         this.citaRepository = citaRepository;
         this.mascotaRepository = mascotaRepository;
         this.veterinarioRepository = veterinarioRepository;
+        this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
         this.notificacionService = notificacionService;
     }
@@ -55,6 +62,15 @@ public class CitaService {
         Veterinario veterinario = veterinarioRepository.findByUsuarioId(dto.getVeterinarioId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Veterinario no encontrado para el usuario id: " + dto.getVeterinarioId()));
+
+        Servicio servicio = servicioRepository.findById(dto.getServicioId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Servicio no encontrado con id: " + dto.getServicioId()));
+
+        if (!veterinario.getServicios().contains(servicio)) {
+            throw new BadRequestException(
+                "El veterinario no ofrece este servicio");
+        }
 
         LocalDateTime inicio = dto.getFechaHora();
         LocalDateTime fin = inicio.plusMinutes(dto.getDuracionMinutos());
@@ -71,7 +87,7 @@ public class CitaService {
         Cita cita = new Cita();
         cita.setMascota(mascota);
         cita.setVeterinario(veterinario);
-        cita.setTipoCita(dto.getTipoCita());
+        cita.setServicio(servicio);
         cita.setFechaHora(inicio);
         cita.setDuracionMinutos(dto.getDuracionMinutos());
         cita.setNotas(dto.getNotas());
@@ -83,7 +99,7 @@ public class CitaService {
             notificacionService.crearNotificacion(
                 mascota.getUsuario().getId(),
                 "Nuevo Turno Solicitado",
-                "Se ha solicitado un turno de tipo " + dto.getTipoCita() + " para tu mascota " + mascota.getNombre() + " con el doctor " + veterinario.getUsuario().getNombre() + " para el " + inicio.getDayOfMonth() + "/" + inicio.getMonthValue() + " a las " + inicio.toLocalTime() + " hs.",
+                "Se ha solicitado un turno de " + servicio.getNombre() + " para tu mascota " + mascota.getNombre() + " con el doctor " + veterinario.getUsuario().getNombre() + " para el " + inicio.getDayOfMonth() + "/" + inicio.getMonthValue() + " a las " + inicio.toLocalTime() + " hs.",
                 TipoNotificacion.SISTEMA
             );
         } catch (Exception e) {
@@ -223,7 +239,13 @@ public class CitaService {
         dto.setVeterinarioId(cita.getVeterinario().getId());
         dto.setVeterinarioNombre(cita.getVeterinario().getUsuario().getNombre());
         dto.setVeterinarioAvatar(cita.getVeterinario().getUsuario().getAvatar());
-        dto.setTipoCita(cita.getTipoCita());
+        dto.setServicio(new ServicioResponse(
+            cita.getServicio().getId(),
+            cita.getServicio().getNombre(),
+            cita.getServicio().getDescripcion(),
+            cita.getServicio().getPrecio(),
+            null
+        ));
         dto.setFechaHora(cita.getFechaHora());
         dto.setDuracionMinutos(cita.getDuracionMinutos());
         dto.setEstado(cita.getEstado());

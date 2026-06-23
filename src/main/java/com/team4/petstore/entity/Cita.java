@@ -1,6 +1,5 @@
 package com.team4.petstore.entity;
 import com.team4.petstore.entity.enums.EstadoCita;
-import com.team4.petstore.entity.enums.TipoCita;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -20,9 +19,9 @@ public class Cita {
     @JoinColumn(name = "veterinario_id", nullable = false)
     private Veterinario veterinario;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_cita", nullable = false, length = 30)
-    private TipoCita tipoCita;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "servicio_id", nullable = false)
+    private Servicio servicio;
 
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
@@ -57,8 +56,8 @@ public class Cita {
     public Veterinario getVeterinario() { return veterinario; }
     public void setVeterinario(Veterinario veterinario) { this.veterinario = veterinario; }
 
-    public TipoCita getTipoCita() { return tipoCita; }
-    public void setTipoCita(TipoCita tipoCita) { this.tipoCita = tipoCita; }
+    public Servicio getServicio() { return servicio; }
+    public void setServicio(Servicio servicio) { this.servicio = servicio; }
 
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }

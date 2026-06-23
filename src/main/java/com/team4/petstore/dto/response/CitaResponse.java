@@ -1,6 +1,5 @@
 package com.team4.petstore.dto.response;
 import com.team4.petstore.entity.enums.EstadoCita;
-import com.team4.petstore.entity.enums.TipoCita;
 import java.time.LocalDateTime;
 
 public class CitaResponse {
@@ -13,7 +12,7 @@ public class CitaResponse {
     private String veterinarioAvatar;
     private Long clienteId;
     private String clienteNombre;
-    private TipoCita tipoCita;
+    private ServicioResponse servicio;
     private LocalDateTime fechaHora;
     private Integer duracionMinutos;
     private EstadoCita estado;
@@ -47,8 +46,8 @@ public class CitaResponse {
     public String getClienteNombre() { return clienteNombre; }
     public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
 
-    public TipoCita getTipoCita() { return tipoCita; }
-    public void setTipoCita(TipoCita tipoCita) { this.tipoCita = tipoCita; }
+    public ServicioResponse getServicio() { return servicio; }
+    public void setServicio(ServicioResponse servicio) { this.servicio = servicio; }
 
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }

@@ -2,7 +2,9 @@ package com.team4.petstore.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.team4.petstore.dto.request.ServicioRequest;
@@ -29,7 +31,7 @@ public class ServicioService {
 
     @Transactional
     public ServicioResponse crear(ServicioRequest dto) {
-        List<Veterinario> veterinarios = veterinarioRepository.findAllById(dto.getVeterinarioIds());
+        Set<Veterinario> veterinarios = new HashSet<>(veterinarioRepository.findAllById(dto.getVeterinarioIds()));
 
         if (veterinarios.isEmpty()) {
             throw new ResourceNotFoundException("No se encontraron veterinarios para los IDs proporcionados");
@@ -83,10 +85,11 @@ public class ServicioService {
         Servicio servicio = servicioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + id));
 
-        List<Veterinario> veterinarios = veterinarioRepository.findAllById(dto.getVeterinarioIds());
-        if (veterinarios.isEmpty()) {
+        List<Veterinario> veterinariosList = veterinarioRepository.findAllById(dto.getVeterinarioIds());
+        if (veterinariosList.isEmpty()) {
             throw new ResourceNotFoundException("No se encontraron veterinarios para los IDs proporcionados");
         }
+        Set<Veterinario> veterinarios = new HashSet<>(veterinariosList);
 
         servicio.setNombre(dto.getNombre());
         servicio.setDescripcion(dto.getDescripcion());

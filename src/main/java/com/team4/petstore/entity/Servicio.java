@@ -1,7 +1,9 @@
 package com.team4.petstore.entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 
@@ -28,7 +30,7 @@ public class Servicio {
         joinColumns = @JoinColumn(name = "servicio_id"),
         inverseJoinColumns = @JoinColumn(name = "veterinario_id")
     )
-    private List<Veterinario> veterinarios = new ArrayList<>();
+    private Set<Veterinario> veterinarios = new HashSet<>();
 
     public Servicio() {}
 
@@ -45,6 +47,6 @@ public class Servicio {
     public Double getPrecio() { return precio; }
     public void setPrecio(Double precio) { this.precio = precio; }
 
-    public List<Veterinario> getVeterinarios() { return veterinarios; }
-    public void setVeterinarios(List<Veterinario> veterinarios) { this.veterinarios = veterinarios; }
+    public Set<Veterinario> getVeterinarios() { return veterinarios; }
+    public void setVeterinarios(Set<Veterinario> veterinarios) { this.veterinarios = veterinarios; }
 }

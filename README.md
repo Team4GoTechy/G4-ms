@@ -9,8 +9,10 @@ Este proyecto implementa un sistema completo de **e-commerce** y **gestión vete
 | Módulo | Descripción |
 |--------|-------------|
 | **E-Commerce** | Gestión de productos, compras y usuarios (CLIENTE, ADMIN) |
-| **Gestión Veterinaria** | Gestión de historial clínico, consultas, citas e internaciones (VETERINARIO, ADMIN) |
+| **Gestión Veterinaria** | Gestión de historial clínico, consultas, citas, internaciones, servicios y veterinarios (VETERINARIO, ADMIN) |
 | **Vet-Stock** | Gestión de insumos médicos, stock, solicitudes y órdenes de compra (VETERINARIO, ADMIN) |
+
+> **🔄 Refactor reciente:** El módulo de veterinarios implementa la **Opción A** del modelo de servicios. Se consolidó `Servicio` (entidad comercial) como única fuente de verdad para "qué ofrece un veterinario" y "qué se agenda en una cita". Anteriormente existía un enum `TipoCita` que se usaba para ambos propósitos, generando duplicación. Ahora `Cita.servicio` es una relación `ManyToOne` a `Servicio`, y `Veterinario.servicios` es una relación `ManyToMany` con `Servicio`. Esto garantiza que un cliente no pueda agendar un servicio que el veterinario no ofrece.
 
 ---
 
@@ -26,14 +28,14 @@ Este módulo implementa la gestión de historial clínico de mascotas, consultas
 
 ### Descripción
 
-Este módulo permite a los **administradores** gestionar el alta, edición y disponibilidad de los veterinarios registrados en el sistema.
+Este módulo permite a los **administradores** gestionar el alta, edición y disponibilidad de los veterinarios registrados en el sistema. Los veterinarios se asocian al catálogo de `Servicios` (entidad comercial con precio) que pueden ofrecer, garantizando consistencia con las citas agendadas.
 
 ### Funcionalidades Principales
 
 | Funcionalidad | Descripción |
 |---------------|-------------|
 | **Veterinarios** | CRUD completo de veterinarios con datos de cuenta y perfil profesional |
-| **Servicios Habilitados** | Define qué servicios (Consulta, Vacunación, Cirugía, etc.) puede realizar cada veterinario |
+| **Servicios Ofrecidos** | Asocia el veterinario a los `Servicios` del catálogo que puede ofrecer (Many-to-Many) |
 | **Horarios de Atención** | Configuración semanal de horarios (Lunes a Domingo) |
 | **Bloqueos de Fecha** | Registro de vacaciones/ausencias que bloquean automáticamente la agenda |
 
@@ -67,7 +69,15 @@ erDiagram
         date fecha_fin
         string motivo
     }
-    VETERINARIO }o--o{ TIPO_CITA : servicios_habilitados
+    VETERINARIO }o--o{ SERVICIO : ofrece
+    SERVICIO {
+        Long id PK
+        string nombre
+        string descripcion
+        decimal precio
+    }
+    CITA }o--|| SERVICIO : referencia
+    CITA }o--|| VETERINARIO : agendada_con
 ```
 
 ### Endpoints Principales (Vet-Admin)
@@ -100,9 +110,23 @@ POST /api/v1/veterinarios
   "matricula": "VET-2024-001",
   "especialidad": "Cirugía General",
   "bio": "Médico veterinario con más de 10 años de experiencia en cirugía general y emergencia.",
-  "serviciosHabilitados": ["CONSULTA", "VACUNACION", "CIRUGIA"]
+  "servicioIds": [1, 2, 3]
 }
 ```
+
+> **Nota:** Los `servicioIds` deben corresponder a IDs de `Servicios` existentes en el catálogo (creados vía `POST /api/v1/servicios`).
+
+### Validación de Negocio (Cita ↔ Veterinario ↔ Servicio)
+
+Cuando se agenda una cita, el sistema valida que el veterinario esté asociado al servicio solicitado:
+
+```java
+if (!veterinario.getServicios().contains(servicio)) {
+    throw new BadRequestException("El veterinario no ofrece este servicio");
+}
+```
+
+Esto garantiza que un cliente no pueda agendar, por ejemplo, una cirugía con un veterinario que solo ofrece consultas.
 
 ### Ejemplo: Actualizar Horarios
 
@@ -178,10 +202,24 @@ erDiagram
 | POST | `/api/v1/consultas` | Registrar nueva consulta | ADMIN, VETERINARIO |
 | PUT | `/api/v1/consultas/{id}` | Actualizar consulta | ADMIN, VETERINARIO |
 | DELETE | `/api/v1/consultas/{id}` | Eliminar consulta | ADMIN |
-| POST | `/api/v1/citas` | Crear cita | ADMIN, VETERINARIO |
+| POST | `/api/v1/citas` | Crear cita (valida que el veterinario ofrezca el servicio) | ADMIN, VETERINARIO |
 | GET | `/api/v1/citas/veterinario/{id}/mes?anio=&mes=` | Agenda del mes | ADMIN, VETERINARIO |
 | POST | `/api/v1/internaciones` | Crear internación | ADMIN, VETERINARIO |
 | PUT | `/api/v1/internaciones/{id}/evolucion` | Agregar evolución | ADMIN, VETERINARIO |
+
+### Ejemplo: Crear Cita
+
+```json
+POST /api/v1/citas
+{
+  "mascotaId": 1,
+  "veterinarioId": 5,
+  "servicioId": 2,
+  "fechaHora": "2026-07-15T10:00:00",
+  "duracionMinutos": 30,
+  "notas": "Control de rutina"
+}
+```
 
 ---
 
@@ -635,12 +673,34 @@ erDiagram
         date fecha_fin
         string motivo
     }
+    SERVICIO {
+        Long id PK
+        string nombre
+        string descripcion
+        decimal precio
+    }
+    CITA {
+        Long id PK
+        Long fk_mascota FK
+        Long fk_veterinario FK
+        Long fk_servicio FK
+        datetime fecha_hora
+        int duracion_min
+        string estado
+    }
+    SERVICIO_VETERINARIO {
+        Long fk_servicio FK
+        Long fk_veterinario FK
+    }
 
     USUARIO }o--|| ROL : tiene
     USUARIO ||--|| VETERINARIO : es
     USUARIO ||--o{ SOLICITUD_REPOSICION : solicita
     VETERINARIO ||--o{ HORARIO_ATENCION : tiene
     VETERINARIO ||--o{ BLOQUEO_FECHA : tiene
+    VETERINARIO }o--o{ SERVICIO : ofrece
+    CITA }o--|| VETERINARIO : agendada_con
+    CITA }o--|| SERVICIO : referencia
     PROVEEDOR ||--o{ ORDEN_COMPRA : surte
     INSUMO ||--|| STOCK_INSUMO : tiene
     INSUMO ||--o{ DETALLE_SOLICITUD : referenced_by
@@ -674,6 +734,7 @@ src/main/java/com/team4/petstore/
 │   ├── SolicitudReposicionController.java
 │   ├── OrdenCompraController.java
 │   ├── ProveedorController.java
+│   ├── ServicioController.java
 │   └── VeterinarioController.java       # Vet-Admin
 ├── dto/
 │   ├── request/        # DTOs de entrada
@@ -681,11 +742,16 @@ src/main/java/com/team4/petstore/
 │   │   ├── VeterinarioCuentaRequest.java
 │   │   ├── VeterinarioPerfilRequest.java
 │   │   ├── HorarioRequest.java
-│   │   └── BloqueoFechaRequest.java
+│   │   ├── BloqueoFechaRequest.java
+│   │   ├── CambiarEstadoRequest.java
+│   │   ├── CitaRequest.java
+│   │   └── ServicioRequest.java
 │   └── response/       # DTOs de salida
 │       ├── VeterinarioResponse.java
 │       ├── HorarioResponse.java
-│       └── BloqueoFechaResponse.java
+│       ├── BloqueoFechaResponse.java
+│       ├── CitaResponse.java
+│       └── ServicioResponse.java
 ├── entity/             # Entidades JPA
 │   ├── Usuario.java, Rol.java, Producto.java
 │   ├── Categoria.java, Compra.java, DetalleCompra.java
@@ -694,16 +760,20 @@ src/main/java/com/team4/petstore/
 │   ├── SolicitudReposicion.java, DetalleSolicitud.java
 │   ├── OrdenCompra.java, DetalleOrdenCompra.java
 │   ├── Proveedor.java, Internacion.java, Prescripcion.java
+│   ├── Servicio.java                       # Catálogo comercial
 │   ├── Veterinario.java, HorarioAtencion.java, BloqueoFecha.java  # Vet-Admin
 │   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, EstadoCita, TipoCita, etc.
 ├── exception/         # Excepciones personalizadas
 ├── repository/         # Repositorios JPA
 │   ├── VeterinarioRepository.java
 │   ├── HorarioAtencionRepository.java   # Vet-Admin
-│   └── BloqueoFechaRepository.java       # Vet-Admin
+│   ├── BloqueoFechaRepository.java       # Vet-Admin
+│   └── ServicioRepository.java
 ├── security/           # Filtros JWT y configuración de seguridad
 ├── service/           # Lógica de negocio
-│   └── VeterinarioService.java          # Vet-Admin
+│   ├── VeterinarioService.java          # Vet-Admin
+│   ├── ServicioService.java
+│   └── CitaService.java                  # Valida veterinario.tieneServicio()
 └── event/             # Eventos de dominio (citas, evoluciones)
 ```
 

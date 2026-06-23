@@ -1,6 +1,5 @@
 package com.team4.petstore.entity;
 
-import com.team4.petstore.entity.enums.TipoCita;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,11 +31,8 @@ public class Veterinario {
     @Column(nullable = false)
     private Boolean activo = true;
 
-    @ElementCollection(targetClass = TipoCita.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "veterinario_servicios", joinColumns = @JoinColumn(name = "veterinario_id"))
-    @Column(name = "servicio")
-    @Enumerated(EnumType.STRING)
-    private Set<TipoCita> serviciosHabilitados = new HashSet<>();
+    @ManyToMany(mappedBy = "veterinarios", fetch = FetchType.LAZY)
+    private Set<Servicio> servicios = new HashSet<>();
 
     @OneToMany(mappedBy = "veterinario", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("diaSemana ASC")
@@ -69,8 +65,8 @@ public class Veterinario {
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
 
-    public Set<TipoCita> getServiciosHabilitados() { return serviciosHabilitados; }
-    public void setServiciosHabilitados(Set<TipoCita> serviciosHabilitados) { this.serviciosHabilitados = serviciosHabilitados; }
+    public Set<Servicio> getServicios() { return servicios; }
+    public void setServicios(Set<Servicio> servicios) { this.servicios = servicios; }
 
     public List<HorarioAtencion> getHorarios() { return horarios; }
     public void setHorarios(List<HorarioAtencion> horarios) { this.horarios = horarios; }

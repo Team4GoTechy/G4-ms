@@ -5,10 +5,12 @@ import com.team4.petstore.dto.request.HorarioRequest;
 import com.team4.petstore.dto.request.VeterinarioRequest;
 import com.team4.petstore.dto.response.BloqueoFechaResponse;
 import com.team4.petstore.dto.response.HorarioResponse;
+import com.team4.petstore.dto.response.ServicioResponse;
 import com.team4.petstore.dto.response.VeterinarioResponse;
 import com.team4.petstore.entity.BloqueoFecha;
 import com.team4.petstore.entity.HorarioAtencion;
 import com.team4.petstore.entity.Rol;
+import com.team4.petstore.entity.Servicio;
 import com.team4.petstore.entity.Usuario;
 import com.team4.petstore.entity.Veterinario;
 import com.team4.petstore.exception.BadRequestException;
@@ -16,6 +18,7 @@ import com.team4.petstore.exception.ResourceNotFoundException;
 import com.team4.petstore.repository.BloqueoFechaRepository;
 import com.team4.petstore.repository.HorarioAtencionRepository;
 import com.team4.petstore.repository.RolRepository;
+import com.team4.petstore.repository.ServicioRepository;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.repository.VeterinarioRepository;
 import org.springframework.lang.NonNull;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +39,7 @@ public class VeterinarioService {
     private final VeterinarioRepository veterinarioRepository;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
+    private final ServicioRepository servicioRepository;
     private final HorarioAtencionRepository horarioAtencionRepository;
     private final BloqueoFechaRepository bloqueoFechaRepository;
     private final PasswordEncoder passwordEncoder;
@@ -54,12 +59,14 @@ public class VeterinarioService {
             VeterinarioRepository veterinarioRepository,
             UsuarioRepository usuarioRepository,
             RolRepository rolRepository,
+            ServicioRepository servicioRepository,
             HorarioAtencionRepository horarioAtencionRepository,
             BloqueoFechaRepository bloqueoFechaRepository,
             PasswordEncoder passwordEncoder) {
         this.veterinarioRepository = veterinarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
+        this.servicioRepository = servicioRepository;
         this.horarioAtencionRepository = horarioAtencionRepository;
         this.bloqueoFechaRepository = bloqueoFechaRepository;
         this.passwordEncoder = passwordEncoder;
@@ -98,6 +105,8 @@ public class VeterinarioService {
             throw new BadRequestException("La contraseña es obligatoria al crear un veterinario");
         }
 
+        Set<Servicio> servicios = resolverServicios(request.getServicioIds());
+
         Rol rolVeterinario = rolRepository.findByNombre(ROLE_VETERINARIO)
                 .orElseThrow(() -> new ResourceNotFoundException("Rol VETERINARIO no encontrado"));
 
@@ -116,7 +125,7 @@ public class VeterinarioService {
         veterinario.setMatricula(request.getMatricula());
         veterinario.setEspecialidad(request.getEspecialidad());
         veterinario.setBio(request.getBio());
-        veterinario.setServiciosHabilitados(request.getServiciosHabilitados());
+        veterinario.setServicios(servicios);
         veterinario.setActivo(true);
         veterinario = veterinarioRepository.save(veterinario);
 
@@ -151,10 +160,12 @@ public class VeterinarioService {
             throw new BadRequestException("El número de matrícula ya está registrado");
         }
 
+        Set<Servicio> servicios = resolverServicios(request.getServicioIds());
+
         veterinario.setMatricula(request.getMatricula());
         veterinario.setEspecialidad(request.getEspecialidad());
         veterinario.setBio(request.getBio());
-        veterinario.setServiciosHabilitados(request.getServiciosHabilitados());
+        veterinario.setServicios(servicios);
         veterinario = veterinarioRepository.save(veterinario);
 
         return toResponse(veterinario);
@@ -301,9 +312,22 @@ public class VeterinarioService {
         response.setEspecialidad(veterinario.getEspecialidad());
         response.setBio(veterinario.getBio());
         response.setActivo(veterinario.getActivo());
-        response.setServiciosHabilitados(veterinario.getServiciosHabilitados());
+        response.setServicios(veterinario.getServicios().stream()
+                .map(s -> new ServicioResponse(s.getId(), s.getNombre(), s.getDescripcion(), s.getPrecio(), null))
+                .collect(Collectors.toSet()));
         response.setFechaCreacion(veterinario.getCreatedAt());
         return response;
+    }
+
+    private Set<Servicio> resolverServicios(Set<Long> servicioIds) {
+        if (servicioIds == null || servicioIds.isEmpty()) {
+            throw new BadRequestException("Debe asignar al menos un servicio");
+        }
+        Set<Servicio> servicios = new HashSet<>(servicioRepository.findAllById(servicioIds));
+        if (servicios.size() != servicioIds.size()) {
+            throw new ResourceNotFoundException("Uno o más servicios no existen");
+        }
+        return servicios;
     }
 
     private HorarioResponse toHorarioResponse(HorarioAtencion horario) {

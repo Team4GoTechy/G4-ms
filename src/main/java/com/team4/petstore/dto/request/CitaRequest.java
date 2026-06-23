@@ -1,13 +1,16 @@
 package com.team4.petstore.dto.request;
 
-import com.team4.petstore.entity.enums.TipoCita;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public class CitaRequest {
 
     private Long mascotaId;
     private Long veterinarioId;
-    private TipoCita tipoCita;
+
+    @NotNull(message = "El servicio es obligatorio")
+    private Long servicioId;
+
     private LocalDateTime fechaHora;
     private Integer duracionMinutos;
     private String notas;
@@ -20,8 +23,8 @@ public class CitaRequest {
     public Long getVeterinarioId() { return veterinarioId; }
     public void setVeterinarioId(Long veterinarioId) { this.veterinarioId = veterinarioId; }
 
-    public TipoCita getTipoCita() { return tipoCita; }
-    public void setTipoCita(TipoCita tipoCita) { this.tipoCita = tipoCita; }
+    public Long getServicioId() { return servicioId; }
+    public void setServicioId(Long servicioId) { this.servicioId = servicioId; }
 
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }

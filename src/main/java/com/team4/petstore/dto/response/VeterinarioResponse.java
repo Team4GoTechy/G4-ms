@@ -1,6 +1,5 @@
 package com.team4.petstore.dto.response;
 
-import com.team4.petstore.entity.enums.TipoCita;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -38,8 +37,8 @@ public class VeterinarioResponse {
     @Schema(description = "Indica si está activo", example = "true")
     private Boolean activo;
 
-    @Schema(description = "Servicios habilitados", example = "[\"CONSULTA\", \"VACUNACION\", \"CIRUGIA\"]")
-    private Set<TipoCita> serviciosHabilitados;
+    @Schema(description = "Servicios que el veterinario puede ofrecer", example = "[{\"id\": 1, \"nombre\": \"Consulta general\"}]")
+    private Set<ServicioResponse> servicios;
 
     @Schema(description = "Fecha de creación", example = "2024-01-15T10:30:00")
     private LocalDateTime fechaCreacion;
@@ -57,7 +56,6 @@ public class VeterinarioResponse {
         this.activo = activo;
         this.avatar = avatar;
     }
-
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -89,8 +87,8 @@ public class VeterinarioResponse {
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
 
-    public Set<TipoCita> getServiciosHabilitados() { return serviciosHabilitados; }
-    public void setServiciosHabilitados(Set<TipoCita> serviciosHabilitados) { this.serviciosHabilitados = serviciosHabilitados; }
+    public Set<ServicioResponse> getServicios() { return servicios; }
+    public void setServicios(Set<ServicioResponse> servicios) { this.servicios = servicios; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
