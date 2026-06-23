@@ -1,6 +1,12 @@
 package com.team4.petstore.entity;
 
+import com.team4.petstore.entity.enums.TipoCita;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "veterinarios")
@@ -26,6 +32,23 @@ public class Veterinario {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @ElementCollection(targetClass = TipoCita.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "veterinario_servicios", joinColumns = @JoinColumn(name = "veterinario_id"))
+    @Column(name = "servicio")
+    @Enumerated(EnumType.STRING)
+    private Set<TipoCita> serviciosHabilitados = new HashSet<>();
+
+    @OneToMany(mappedBy = "veterinario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("diaSemana ASC")
+    private List<HorarioAtencion> horarios = new ArrayList<>();
+
+    @OneToMany(mappedBy = "veterinario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("fechaInicio ASC")
+    private List<BloqueoFecha> bloqueos = new ArrayList<>();
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     public Veterinario() {}
 
     public Long getId() { return id; }
@@ -45,4 +68,36 @@ public class Veterinario {
 
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+
+    public Set<TipoCita> getServiciosHabilitados() { return serviciosHabilitados; }
+    public void setServiciosHabilitados(Set<TipoCita> serviciosHabilitados) { this.serviciosHabilitados = serviciosHabilitados; }
+
+    public List<HorarioAtencion> getHorarios() { return horarios; }
+    public void setHorarios(List<HorarioAtencion> horarios) { this.horarios = horarios; }
+
+    public List<BloqueoFecha> getBloqueos() { return bloqueos; }
+    public void setBloqueos(List<BloqueoFecha> bloqueos) { this.bloqueos = bloqueos; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public void addHorario(HorarioAtencion horario) {
+        horarios.add(horario);
+        horario.setVeterinario(this);
+    }
+
+    public void removeHorario(HorarioAtencion horario) {
+        horarios.remove(horario);
+        horario.setVeterinario(null);
+    }
+
+    public void addBloqueo(BloqueoFecha bloqueo) {
+        bloqueos.add(bloqueo);
+        bloqueo.setVeterinario(this);
+    }
+
+    public void removeBloqueo(BloqueoFecha bloqueo) {
+        bloqueos.remove(bloqueo);
+        bloqueo.setVeterinario(null);
+    }
 }

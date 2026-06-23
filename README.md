@@ -20,6 +20,121 @@ Este proyecto implementa un sistema completo de **e-commerce** y **gestión vete
 
 Este módulo implementa la gestión de historial clínico de mascotas, consultas médicas, citas e internaciones dentro del sistema, con control de acceso por roles.
 
+---
+
+## 👨‍⚕️ Módulo de Administración de Veterinarios (Vet-Admin)
+
+### Descripción
+
+Este módulo permite a los **administradores** gestionar el alta, edición y disponibilidad de los veterinarios registrados en el sistema.
+
+### Funcionalidades Principales
+
+| Funcionalidad | Descripción |
+|---------------|-------------|
+| **Veterinarios** | CRUD completo de veterinarios con datos de cuenta y perfil profesional |
+| **Servicios Habilitados** | Define qué servicios (Consulta, Vacunación, Cirugía, etc.) puede realizar cada veterinario |
+| **Horarios de Atención** | Configuración semanal de horarios (Lunes a Domingo) |
+| **Bloqueos de Fecha** | Registro de vacaciones/ausencias que bloquean automáticamente la agenda |
+
+### Modelo de Datos (Vet-Admin)
+
+```mermaid
+erDiagram
+    USUARIO ||--|| VETERINARIO : es
+    VETERINARIO {
+        Long id PK
+        Long usuario_id FK
+        string matricula
+        string especialidad
+        string bio
+        boolean activo
+    }
+    VETERINARIO ||--o{ HORARIO_ATENCION : tiene
+    HORARIO_ATENCION {
+        Long id PK
+        Long veterinario_id FK
+        int dia_semana
+        time hora_inicio
+        time hora_fin
+        boolean trabaja
+    }
+    VETERINARIO ||--o{ BLOQUEO_FECHA : tiene
+    BLOQUEO_FECHA {
+        Long id PK
+        Long veterinario_id FK
+        date fecha_inicio
+        date fecha_fin
+        string motivo
+    }
+    VETERINARIO }o--o{ TIPO_CITA : servicios_habilitados
+```
+
+### Endpoints Principales (Vet-Admin)
+
+| Método | Ruta | Descripción | Auth |
+|--------|------|-------------|------|
+| GET | `/api/v1/veterinarios` | Listar veterinarios activos | ADMIN |
+| GET | `/api/v1/veterinarios/todos` | Listar todos los veterinarios | ADMIN |
+| GET | `/api/v1/veterinarios/{id}` | Obtener veterinario por ID | ADMIN |
+| POST | `/api/v1/veterinarios` | Crear veterinario | ADMIN |
+| PUT | `/api/v1/veterinarios/{id}` | Actualizar veterinario | ADMIN |
+| DELETE | `/api/v1/veterinarios/{id}` | Eliminar veterinario (soft delete) | ADMIN |
+| PATCH | `/api/v1/veterinarios/{id}/activo` | Activar/Desactivar veterinario | ADMIN |
+| GET | `/api/v1/veterinarios/{id}/horarios` | Listar horarios | ADMIN |
+| PUT | `/api/v1/veterinarios/{id}/horarios` | Actualizar horarios (7 días) | ADMIN |
+| GET | `/api/v1/veterinarios/{id}/bloqueos` | Listar bloqueos | ADMIN |
+| POST | `/api/v1/veterinarios/{id}/bloqueos` | Crear bloqueo | ADMIN |
+| DELETE | `/api/v1/veterinarios/{id}/bloqueos/{bloqueoId}` | Eliminar bloqueo | ADMIN |
+
+### Ejemplo: Crear Veterinario
+
+```json
+POST /api/v1/veterinarios
+{
+  "nombre": "Juan",
+  "apellido": "Perez",
+  "email": "juan.perez@petstore.com",
+  "password": "securePassword123",
+  "telefono": "351-555-1234",
+  "matricula": "VET-2024-001",
+  "especialidad": "Cirugía General",
+  "bio": "Médico veterinario con más de 10 años de experiencia en cirugía general y emergencia.",
+  "serviciosHabilitados": ["CONSULTA", "VACUNACION", "CIRUGIA"]
+}
+```
+
+### Ejemplo: Actualizar Horarios
+
+```json
+PUT /api/v1/veterinarios/1/horarios
+{
+  "horarios": [
+    { "diaSemana": 1, "trabaja": true, "horaInicio": "08:00", "horaFin": "12:00" },
+    { "diaSemana": 1, "trabaja": true, "horaInicio": "14:00", "horaFin": "18:00" },
+    { "diaSemana": 2, "trabaja": true, "horaInicio": "08:00", "horaFin": "16:00" },
+    { "diaSemana": 3, "trabaja": true, "horaInicio": "08:00", "horaFin": "16:00" },
+    { "diaSemana": 4, "trabaja": true, "horaInicio": "08:00", "horaFin": "16:00" },
+    { "diaSemana": 5, "trabaja": true, "horaInicio": "08:00", "horaFin": "14:00" },
+    { "diaSemana": 6, "trabaja": false },
+    { "diaSemana": 7, "trabaja": false }
+  ]
+}
+```
+
+### Ejemplo: Crear Bloqueo de Vacaciones
+
+```json
+POST /api/v1/veterinarios/1/bloqueos
+{
+  "fechaInicio": "2024-07-10",
+  "fechaFin": "2024-07-15",
+  "motivo": "Vacaciones anuales"
+}
+```
+
+---
+
 ### Funcionalidades Principales
 
 | Funcionalidad | Descripción |
@@ -497,9 +612,35 @@ erDiagram
         string descripcion
         Long referencia_id
     }
+    VETERINARIO {
+        Long id PK
+        Long usuario_id FK
+        string matricula
+        string especialidad
+        string bio
+        boolean activo
+    }
+    HORARIO_ATENCION {
+        Long id PK
+        Long veterinario_id FK
+        int dia_semana
+        time hora_inicio
+        time hora_fin
+        boolean trabaja
+    }
+    BLOQUEO_FECHA {
+        Long id PK
+        Long veterinario_id FK
+        date fecha_inicio
+        date fecha_fin
+        string motivo
+    }
 
     USUARIO }o--|| ROL : tiene
+    USUARIO ||--|| VETERINARIO : es
     USUARIO ||--o{ SOLICITUD_REPOSICION : solicita
+    VETERINARIO ||--o{ HORARIO_ATENCION : tiene
+    VETERINARIO ||--o{ BLOQUEO_FECHA : tiene
     PROVEEDOR ||--o{ ORDEN_COMPRA : surte
     INSUMO ||--|| STOCK_INSUMO : tiene
     INSUMO ||--o{ DETALLE_SOLICITUD : referenced_by
@@ -532,10 +673,19 @@ src/main/java/com/team4/petstore/
 │   ├── StockInsumoController.java
 │   ├── SolicitudReposicionController.java
 │   ├── OrdenCompraController.java
-│   └── ProveedorController.java
+│   ├── ProveedorController.java
+│   └── VeterinarioController.java       # Vet-Admin
 ├── dto/
 │   ├── request/        # DTOs de entrada
-│   └── response/      # DTOs de salida
+│   │   ├── VeterinarioRequest.java
+│   │   ├── VeterinarioCuentaRequest.java
+│   │   ├── VeterinarioPerfilRequest.java
+│   │   ├── HorarioRequest.java
+│   │   └── BloqueoFechaRequest.java
+│   └── response/       # DTOs de salida
+│       ├── VeterinarioResponse.java
+│       ├── HorarioResponse.java
+│       └── BloqueoFechaResponse.java
 ├── entity/             # Entidades JPA
 │   ├── Usuario.java, Rol.java, Producto.java
 │   ├── Categoria.java, Compra.java, DetalleCompra.java
@@ -544,11 +694,16 @@ src/main/java/com/team4/petstore/
 │   ├── SolicitudReposicion.java, DetalleSolicitud.java
 │   ├── OrdenCompra.java, DetalleOrdenCompra.java
 │   ├── Proveedor.java, Internacion.java, Prescripcion.java
-│   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, EstadoCita, etc.
+│   ├── Veterinario.java, HorarioAtencion.java, BloqueoFecha.java  # Vet-Admin
+│   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, EstadoCita, TipoCita, etc.
 ├── exception/         # Excepciones personalizadas
 ├── repository/         # Repositorios JPA
+│   ├── VeterinarioRepository.java
+│   ├── HorarioAtencionRepository.java   # Vet-Admin
+│   └── BloqueoFechaRepository.java       # Vet-Admin
 ├── security/           # Filtros JWT y configuración de seguridad
 ├── service/           # Lógica de negocio
+│   └── VeterinarioService.java          # Vet-Admin
 └── event/             # Eventos de dominio (citas, evoluciones)
 ```
 
