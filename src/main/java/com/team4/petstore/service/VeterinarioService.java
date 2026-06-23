@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,15 @@ public class VeterinarioService {
     private final PasswordEncoder passwordEncoder;
 
     private static final String ROLE_VETERINARIO = "ROLE_VETERINARIO";
-    private static final String[] NOMBRES_DIAS = {"", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    private static final Map<Integer, String> NOMBRES_DIAS = Map.of(
+            1, "Lunes",
+            2, "Martes",
+            3, "Miércoles",
+            4, "Jueves",
+            5, "Viernes",
+            6, "Sábado",
+            7, "Domingo"
+    );
 
     public VeterinarioService(
             VeterinarioRepository veterinarioRepository,
@@ -57,8 +66,7 @@ public class VeterinarioService {
     }
 
     public List<VeterinarioResponse> listar() {
-        return veterinarioRepository.findAll().stream()
-                .filter(Veterinario::getActivo)
+        return veterinarioRepository.findByActivoTrue().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -123,6 +131,12 @@ public class VeterinarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado con id: " + id));
 
         Usuario usuario = veterinario.getUsuario();
+
+        if (!usuario.getEmail().equals(request.getEmail()) &&
+                usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("El correo electrónico ya está registrado");
+        }
+
         usuario.setNombre(request.getNombre());
         usuario.setApellido(request.getApellido());
         usuario.setEmail(request.getEmail());
@@ -277,7 +291,9 @@ public class VeterinarioService {
         VeterinarioResponse response = new VeterinarioResponse();
         response.setId(veterinario.getId());
         response.setUsuarioId(veterinario.getUsuario().getId());
-        response.setNombreCompleto(veterinario.getUsuario().getNombre() + " " + veterinario.getUsuario().getApellido());
+        response.setNombreCompleto(String.format("%s %s",
+                veterinario.getUsuario().getNombre(),
+                veterinario.getUsuario().getApellido()));
         response.setAvatar(veterinario.getUsuario().getAvatar());
         response.setEmail(veterinario.getUsuario().getEmail());
         response.setTelefono(veterinario.getUsuario().getCelular());
@@ -294,7 +310,7 @@ public class VeterinarioService {
         HorarioResponse response = new HorarioResponse();
         response.setId(horario.getId());
         response.setDiaSemana(horario.getDiaSemana());
-        response.setNombreDia(NOMBRES_DIAS[horario.getDiaSemana()]);
+        response.setNombreDia(NOMBRES_DIAS.get(horario.getDiaSemana()));
         response.setHoraInicio(horario.getHoraInicio());
         response.setHoraFin(horario.getHoraFin());
         response.setTrabaja(horario.getTrabaja());

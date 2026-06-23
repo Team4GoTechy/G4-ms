@@ -1,6 +1,7 @@
 package com.team4.petstore.controller;
 
 import com.team4.petstore.dto.request.BloqueoFechaRequest;
+import com.team4.petstore.dto.request.CambiarEstadoRequest;
 import com.team4.petstore.dto.request.HorarioRequest;
 import com.team4.petstore.dto.request.VeterinarioRequest;
 import com.team4.petstore.dto.response.BloqueoFechaResponse;
@@ -19,7 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/veterinarios")
@@ -113,12 +113,8 @@ public class VeterinarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VeterinarioResponse> cambiarEstado(
             @Parameter(description = "ID del veterinario") @PathVariable Long id,
-            @RequestBody Map<String, Boolean> body) {
-        Boolean activo = body.get("activo");
-        if (activo == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok(veterinarioService.cambiarEstado(id, activo));
+            @Valid @RequestBody CambiarEstadoRequest request) {
+        return ResponseEntity.ok(veterinarioService.cambiarEstado(id, request.getActivo()));
     }
 
     @Operation(summary = "Listar horarios del veterinario", description = "Obtiene los horarios de atención de un veterinario")
