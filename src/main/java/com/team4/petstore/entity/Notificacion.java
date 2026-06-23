@@ -2,6 +2,7 @@ package com.team4.petstore.entity;
 
 import com.team4.petstore.entity.enums.TipoNotificacion;
 import jakarta.persistence.*;
+import org.springframework.lang.NonNull;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,7 +28,7 @@ public class Notificacion {
     private TipoNotificacion tipo = TipoNotificacion.SISTEMA;
 
     @Column(nullable = false)
-    private Boolean leido = false;
+    private boolean leido = false;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion = LocalDateTime.now();
@@ -44,8 +45,9 @@ public class Notificacion {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @NonNull
     public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public void setUsuario(@NonNull Usuario usuario) { this.usuario = usuario; }
 
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
@@ -56,8 +58,8 @@ public class Notificacion {
     public TipoNotificacion getTipo() { return tipo; }
     public void setTipo(TipoNotificacion tipo) { this.tipo = tipo; }
 
-    public Boolean getLeido() { return leido; }
-    public void setLeido(Boolean leido) { this.leido = leido; }
+    public boolean getLeido() { return leido; }
+    public void setLeido(boolean leido) { this.leido = leido; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }

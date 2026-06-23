@@ -2,6 +2,7 @@ package com.team4.petstore.controller;
 
 import com.team4.petstore.entity.Notificacion;
 import com.team4.petstore.entity.Usuario;
+import com.team4.petstore.exception.ResourceNotFoundException;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.service.NotificacionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,11 +11,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,8 +92,10 @@ public class NotificacionController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NotificacionResponse> marcarLeido(
             @Parameter(description = "ID de la notificación", required = true, example = "1")
-            @PathVariable Long id) {
-        Notificacion notificacion = notificacionService.marcarLeido(id);
+            @PathVariable @NonNull Long id,
+            Authentication authentication) {
+        Long usuarioId = getUsuarioId(authentication);
+        Notificacion notificacion = notificacionService.marcarLeido(id, usuarioId);
         return ResponseEntity.ok(mapToResponse(notificacion));
     }
 
@@ -109,10 +114,11 @@ public class NotificacionController {
         return ResponseEntity.ok(response);
     }
 
+    @NonNull
     private Long getUsuarioId(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         return usuario.getId();
     }
 
@@ -132,10 +138,10 @@ public class NotificacionController {
         private String titulo;
         private String mensaje;
         private String tipo;
-        private Boolean leido;
-        private java.time.LocalDateTime fechaCreacion;
+        private boolean leido;
+        private LocalDateTime fechaCreacion;
 
-        public NotificacionResponse(Long id, String titulo, String mensaje, String tipo, Boolean leido, java.time.LocalDateTime fechaCreacion) {
+        public NotificacionResponse(Long id, String titulo, String mensaje, String tipo, boolean leido, LocalDateTime fechaCreacion) {
             this.id = id;
             this.titulo = titulo;
             this.mensaje = mensaje;
@@ -148,7 +154,7 @@ public class NotificacionController {
         public String getTitulo() { return titulo; }
         public String getMensaje() { return mensaje; }
         public String getTipo() { return tipo; }
-        public Boolean getLeido() { return leido; }
-        public java.time.LocalDateTime getFechaCreacion() { return fechaCreacion; }
+        public boolean getLeido() { return leido; }
+        public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     }
 }
