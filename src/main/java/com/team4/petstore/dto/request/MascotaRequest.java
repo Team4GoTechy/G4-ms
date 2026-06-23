@@ -21,6 +21,9 @@ public class MascotaRequest {
     @Pattern(regexp = "^(Gato|Perro)$", message = "El tipo debe ser 'Gato' o 'Perro'")
     private String tipo;
 
+    @Schema(description = "Raza de la mascota", example = "Caniche")
+    private String raza;
+
     public MascotaRequest() {}
 
     public MascotaRequest(String nombre, String sexo, String tipo) {
@@ -35,4 +38,6 @@ public class MascotaRequest {
     public void setSexo(String sexo) { this.sexo = sexo; }
     public String getTipo() { return tipo; }
     public void setTipo(String tipo) { this.tipo = tipo; }
+    public String getRaza() { return raza; }
+    public void setRaza(String raza) { this.raza = raza; }
 }

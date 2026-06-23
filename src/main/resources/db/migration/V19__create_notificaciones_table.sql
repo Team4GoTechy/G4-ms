@@ -1,6 +1,6 @@
 CREATE TABLE notificaciones (
     id BIGSERIAL PRIMARY KEY,
-    usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+    usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     titulo VARCHAR(200) NOT NULL,
     mensaje TEXT NOT NULL,
     tipo VARCHAR(20) NOT NULL DEFAULT 'SISTEMA',

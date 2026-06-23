@@ -30,20 +30,20 @@ public class ConsultaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<ConsultaResponse> registrar(
             @Valid @RequestBody ConsultaRequest dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(consultaService.registrar(dto));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<ConsultaResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(consultaService.buscarPorId(id));
     }
 
     @PostMapping("/{id}/prescripcion")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<PrescripcionResponse> agregarPrescripcion(
             @PathVariable Long id,
             @Valid @RequestBody PrescripcionRequest dto,
@@ -54,7 +54,7 @@ public class ConsultaController {
     }
 
     @GetMapping("/{id}/prescripcion")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VETERINARIO', 'ROLE_DOCTOR', 'ADMIN', 'VETERINARIO', 'DOCTOR')")
     public ResponseEntity<PrescripcionResponse> verPrescripcion(@PathVariable Long id) {
         return ResponseEntity.ok(prescripcionService.buscarPorConsulta(id));
     }

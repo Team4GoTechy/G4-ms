@@ -37,7 +37,7 @@ public class VeterinarioController {
         @ApiResponse(responseCode = "200", description = "Lista de veterinarios obtenida correctamente")
     })
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<VeterinarioResponse>> listar() {
         return ResponseEntity.ok(veterinarioService.listar());
     }

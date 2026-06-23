@@ -7,12 +7,13 @@ import com.team4.petstore.dto.response.PrescripcionResponse;
 import com.team4.petstore.entity.Consulta;
 import com.team4.petstore.entity.DetallePrescripcion;
 import com.team4.petstore.entity.Prescripcion;
-import com.team4.petstore.entity.Producto;
+import com.team4.petstore.entity.Insumo;
 import com.team4.petstore.entity.Veterinario;
 import com.team4.petstore.exception.ResourceNotFoundException;
+import com.team4.petstore.entity.enums.TipoNotificacion;
 import com.team4.petstore.repository.ConsultaRepository;
 import com.team4.petstore.repository.PrescripcionRepository;
-import com.team4.petstore.repository.ProductoRepository;
+import com.team4.petstore.repository.InsumoRepository;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.repository.VeterinarioRepository;
 import org.springframework.stereotype.Service;
@@ -27,22 +28,22 @@ public class PrescripcionService {
     private final PrescripcionRepository prescripcionRepository;
     private final ConsultaRepository consultaRepository;
     private final VeterinarioRepository veterinarioRepository;
-    private final ProductoRepository productoRepository;
+    private final InsumoRepository insumoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final StockService stockService;
+    private final NotificacionService notificacionService;
 
     public PrescripcionService(PrescripcionRepository prescripcionRepository,
                                ConsultaRepository consultaRepository,
                                VeterinarioRepository veterinarioRepository,
-                               ProductoRepository productoRepository,
+                               InsumoRepository insumoRepository,
                                UsuarioRepository usuarioRepository,
-                               StockService stockService) {
+                               NotificacionService notificacionService) {
         this.prescripcionRepository = prescripcionRepository;
         this.consultaRepository = consultaRepository;
         this.veterinarioRepository = veterinarioRepository;
-        this.productoRepository = productoRepository;
+        this.insumoRepository = insumoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.stockService = stockService;
+        this.notificacionService = notificacionService;
     }
 
     // email viene del token JWT via @AuthenticationPrincipal en el controller
@@ -65,17 +66,13 @@ public class PrescripcionService {
 
         List<DetallePrescripcion> detalles = new ArrayList<>();
         for (DetallePrescripcionRequest detalleDto : dto.getDetalles()) {
-            Producto producto = productoRepository.findById(detalleDto.getProductoId())
+            Insumo insumo = insumoRepository.findById(detalleDto.getInsumoId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                    "Producto no encontrado con id: " + detalleDto.getProductoId()));
-
-            // Si no hay stock lanza StockInsuficienteException
-            // @Transactional revierte prescripcion + todos los descuentos anteriores
-            stockService.descontar(producto.getId(), 1);
+                    "Insumo no encontrado con id: " + detalleDto.getInsumoId()));
 
             DetallePrescripcion detalle = new DetallePrescripcion();
             detalle.setPrescripcion(prescripcion);
-            detalle.setProducto(producto);
+            detalle.setInsumo(insumo);
             detalle.setDosis(detalleDto.getDosis());
             detalle.setFrecuencia(detalleDto.getFrecuencia());
             detalle.setDuracion(detalleDto.getDuracion());
@@ -85,7 +82,20 @@ public class PrescripcionService {
         }
 
         prescripcion.setDetalles(detalles);
-        return mapToResponse(prescripcionRepository.save(prescripcion));
+        Prescripcion guardada = prescripcionRepository.save(prescripcion);
+
+        try {
+            notificacionService.crearNotificacion(
+                consulta.getMascota().getUsuario().getId(),
+                "Nueva Receta Médica",
+                "Se ha emitido una nueva receta médica para tu mascota " + consulta.getMascota().getNombre() + " por el doctor " + veterinario.getUsuario().getNombre() + ".",
+                TipoNotificacion.SISTEMA
+            );
+        } catch (Exception e) {
+            System.err.println("Error enviando notificación de receta: " + e.getMessage());
+        }
+
+        return mapToResponse(guardada);
     }
 
     @Transactional(readOnly = true)
@@ -94,6 +104,15 @@ public class PrescripcionService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Prescripción no encontrada para la consulta: " + consultaId));
         return mapToResponse(prescripcion);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PrescripcionResponse> buscarPorMascota(Long mascotaId) {
+        List<PrescripcionResponse> result = new ArrayList<>();
+        for (Prescripcion p : prescripcionRepository.findByConsultaMascotaId(mascotaId)) {
+            result.add(mapToResponse(p));
+        }
+        return result;
     }
 
     private PrescripcionResponse mapToResponse(Prescripcion p) {
@@ -109,8 +128,8 @@ public class PrescripcionService {
         for (DetallePrescripcion d : p.getDetalles()) {
             DetallePrescripcionResponse detalleDto = new DetallePrescripcionResponse();
             detalleDto.setId(d.getId());
-            detalleDto.setProductoId(d.getProducto().getId());
-            detalleDto.setProductoNombre(d.getProducto().getNombre());
+            detalleDto.setInsumoId(d.getInsumo().getId());
+            detalleDto.setInsumoNombre(d.getInsumo().getNombre());
             detalleDto.setDosis(d.getDosis());
             detalleDto.setFrecuencia(d.getFrecuencia());
             detalleDto.setDuracion(d.getDuracion());

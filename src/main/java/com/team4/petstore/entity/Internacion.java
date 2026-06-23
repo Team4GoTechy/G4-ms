@@ -41,6 +41,12 @@ public class Internacion {
     @Column(columnDefinition = "TEXT")
     private String notas;
 
+    @Column(name = "indicaciones_alta", columnDefinition = "TEXT")
+    private String indicacionesAlta;
+
+    @Column(name = "notas_cliente", columnDefinition = "TEXT")
+    private String notasCliente;
+
     @OneToMany(mappedBy = "internacion", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("fechaHora ASC")
     private List<EvolucionInternacion> evoluciones = new ArrayList<>();
@@ -73,6 +79,12 @@ public class Internacion {
 
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+
+    public String getIndicacionesAlta() { return indicacionesAlta; }
+    public void setIndicacionesAlta(String indicacionesAlta) { this.indicacionesAlta = indicacionesAlta; }
+
+    public String getNotasCliente() { return notasCliente; }
+    public void setNotasCliente(String notasCliente) { this.notasCliente = notasCliente; }
 
     public List<EvolucionInternacion> getEvoluciones() { return evoluciones; }
     public void setEvoluciones(List<EvolucionInternacion> evoluciones) { this.evoluciones = evoluciones; }

@@ -41,9 +41,9 @@ public class ConsultaService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Mascota no encontrada con id: " + dto.getMascotaId()));
 
-        Veterinario veterinario = veterinarioRepository.findById(dto.getVeterinarioId())
+        Veterinario veterinario = veterinarioRepository.findByUsuarioId(dto.getVeterinarioId())
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Veterinario no encontrado con id: " + dto.getVeterinarioId()));
+                "Veterinario no encontrado para usuario id: " + dto.getVeterinarioId()));
 
         Consulta consulta = new Consulta();
         consulta.setMascota(mascota);
@@ -98,6 +98,7 @@ public class ConsultaService {
         dto.setMascotaNombre(c.getMascota().getNombre());
         dto.setVeterinarioId(c.getVeterinario().getId());
         dto.setVeterinarioNombre(c.getVeterinario().getUsuario().getNombre());
+        dto.setVeterinarioAvatar(c.getVeterinario().getUsuario().getAvatar());
         dto.setMotivo(c.getMotivo());
         dto.setAnamnesis(c.getAnamnesis());
         dto.setExamenFisico(c.getExamenFisico());

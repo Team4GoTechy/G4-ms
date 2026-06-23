@@ -40,6 +40,9 @@ public class ProductoRequest {
     @Schema(description = "URL de la imagen del producto", example = "https://example.com/images/alimento-perro.jpg")
     private String imagenUrl;
 
+    @Schema(description = "Peso en kg del producto", example = "15.5")
+    private Double pesoKg;
+
     public ProductoRequest() {}
 
     public String getNombre() { return nombre; }
@@ -58,4 +61,6 @@ public class ProductoRequest {
     public void setCategoriaId(Long categoriaId) { this.categoriaId = categoriaId; }
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public Double getPesoKg() { return pesoKg; }
+    public void setPesoKg(Double pesoKg) { this.pesoKg = pesoKg; }
 }

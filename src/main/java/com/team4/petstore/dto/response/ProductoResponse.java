@@ -35,6 +35,9 @@ public class ProductoResponse {
     @Schema(description = "URL de la imagen del producto", example = "https://example.com/images/alimento-perro.jpg")
     private String imagenUrl;
 
+    @Schema(description = "Peso en kg del producto", example = "15.5")
+    private Double pesoKg;
+
     public ProductoResponse() {}
 
     public Long getId() { return id; }
@@ -57,4 +60,6 @@ public class ProductoResponse {
     public void setActivo(Boolean activo) { this.activo = activo; }
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public Double getPesoKg() { return pesoKg; }
+    public void setPesoKg(Double pesoKg) { this.pesoKg = pesoKg; }
 }

@@ -46,6 +46,19 @@ public class VeterinarioResponse {
 
     public VeterinarioResponse() {}
 
+    public VeterinarioResponse(Long id, Long usuarioId, String nombreCompleto, String matricula,
+                               String especialidad, String bio, Boolean activo, String avatar) {
+        this.id = id;
+        this.usuarioId = usuarioId;
+        this.nombreCompleto = nombreCompleto;
+        this.matricula = matricula;
+        this.especialidad = especialidad;
+        this.bio = bio;
+        this.activo = activo;
+        this.avatar = avatar;
+    }
+
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

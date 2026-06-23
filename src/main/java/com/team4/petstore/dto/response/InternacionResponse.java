@@ -16,6 +16,8 @@ public class InternacionResponse {
     private String jaulaId;
     private EstadoInternacion estado;
     private String notas;
+    private String indicacionesAlta;
+    private String notasCliente;
     private List<EvolucionResponse> evoluciones;
 
     public InternacionResponse() {}
@@ -52,6 +54,12 @@ public class InternacionResponse {
 
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+
+    public String getIndicacionesAlta() { return indicacionesAlta; }
+    public void setIndicacionesAlta(String indicacionesAlta) { this.indicacionesAlta = indicacionesAlta; }
+
+    public String getNotasCliente() { return notasCliente; }
+    public void setNotasCliente(String notasCliente) { this.notasCliente = notasCliente; }
 
     public List<EvolucionResponse> getEvoluciones() { return evoluciones; }
     public void setEvoluciones(List<EvolucionResponse> evoluciones) { this.evoluciones = evoluciones; }

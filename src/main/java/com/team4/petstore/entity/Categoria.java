@@ -1,5 +1,6 @@
 package com.team4.petstore.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ public class Categoria {
     private String descripcion;
 
     @OneToMany(mappedBy = "categoria", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Producto> productos = new ArrayList<>();
 
     public Categoria() {}

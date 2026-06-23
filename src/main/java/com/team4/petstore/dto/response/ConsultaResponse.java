@@ -22,6 +22,7 @@ public class ConsultaResponse {
     private String trc;
     private String notas;
     private LocalDateTime fechaCreacion;
+    private String veterinarioAvatar;
 
     public ConsultaResponse() {}
 
@@ -78,4 +79,7 @@ public class ConsultaResponse {
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
+    public String getVeterinarioAvatar() { return veterinarioAvatar; }
+    public void setVeterinarioAvatar(String veterinarioAvatar) { this.veterinarioAvatar = veterinarioAvatar; }
 }

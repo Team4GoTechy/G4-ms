@@ -10,12 +10,16 @@ public class CitaResponse {
     private String mascotaNombre;
     private Long veterinarioId;
     private String veterinarioNombre;
+    private String veterinarioAvatar;
+    private Long clienteId;
+    private String clienteNombre;
     private TipoCita tipoCita;
     private LocalDateTime fechaHora;
     private Integer duracionMinutos;
     private EstadoCita estado;
     private String notas;
     private LocalDateTime fechaCreacion;
+    private Boolean pagado;
 
     public CitaResponse() {}
 
@@ -34,6 +38,15 @@ public class CitaResponse {
     public String getVeterinarioNombre() { return veterinarioNombre; }
     public void setVeterinarioNombre(String veterinarioNombre) { this.veterinarioNombre = veterinarioNombre; }
 
+    public String getVeterinarioAvatar() { return veterinarioAvatar; }
+    public void setVeterinarioAvatar(String veterinarioAvatar) { this.veterinarioAvatar = veterinarioAvatar; }
+
+    public Long getClienteId() { return clienteId; }
+    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+
     public TipoCita getTipoCita() { return tipoCita; }
     public void setTipoCita(TipoCita tipoCita) { this.tipoCita = tipoCita; }
 
@@ -51,4 +64,7 @@ public class CitaResponse {
     
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion)  { this.fechaCreacion = fechaCreacion; }
+
+    public Boolean getPagado() { return pagado; }
+    public void setPagado(Boolean pagado) { this.pagado = pagado; }
 }

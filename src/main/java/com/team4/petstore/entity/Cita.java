@@ -37,10 +37,16 @@ public class Cita {
     @Column(columnDefinition = "TEXT")
     private String notas;
 
+    @Column(nullable = false)
+    private Boolean pagado = false;
+
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     public Cita() {}
+
+    public Boolean getPagado() { return pagado; }
+    public void setPagado(Boolean pagado) { this.pagado = pagado; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

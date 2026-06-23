@@ -74,6 +74,17 @@ public class CompraController {
         return ResponseEntity.ok(compraService.obtenerHistorialPorUsuario(usuarioId));
     }
 
+    @Operation(summary = "Obtener todas las compras", description = "Devuelve el historial de compras de todos los clientes (solo ADMIN)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente"),
+        @ApiResponse(responseCode = "403", description = "Acceso denegado - solo ADMIN")
+    })
+    @GetMapping("/todas")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CompraResponse>> listarTodas() {
+        return ResponseEntity.ok(compraService.listarTodas());
+    }
+
     @Operation(summary = "Cambiar estado de compra", description = "Permite al ADMIN cambiar el estado de una compra. Cuando se cancela, el stock se restaura automáticamente. Estados válidos: PENDIENTE, CONFIRMADO, ENTREGADO, CANCELADO")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Estado actualizado correctamente"),

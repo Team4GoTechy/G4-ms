@@ -103,6 +103,13 @@ public class CompraService {
             .collect(Collectors.toList());
     }
 
+    public List<CompraResponse> listarTodas() {
+        List<Compra> compras = compraRepository.findAllWithDetalles();
+        return compras.stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
     @Transactional
     public CompraResponse updateEstado(Long compraId, String nuevoEstado) {
         Compra compra = compraRepository.findByIdWithDetalles(compraId)
