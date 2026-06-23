@@ -1,0 +1,1 @@
+ALTER TABLE productos ADD COLUMN peso_kg DECIMAL(5,2);

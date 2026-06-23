@@ -1,1 +1,0 @@
-ALTER TABLE productos ADD COLUMN peso_kg DOUBLE PRECISION;
