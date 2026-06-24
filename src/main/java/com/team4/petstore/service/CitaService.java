@@ -138,6 +138,11 @@ public class CitaService {
 
         EstadoCita anterior = cita.getEstado();
         cita.setEstado(dto.getEstado());
+
+        if (dto.getMotivo() != null && !dto.getMotivo().trim().isEmpty()) {
+            cita.setMotivoCancelacion(dto.getMotivo());
+        }
+
         Cita guardada = citaRepository.save(cita);
 
         if (anterior != dto.getEstado()) {
@@ -150,6 +155,16 @@ public class CitaService {
                 } else if (dto.getEstado() == EstadoCita.CANCELADA) {
                     titulo = "Turno Cancelado";
                     descEstado = "ha sido cancelado";
+                } else if (dto.getEstado() == EstadoCita.CANCELADA_POR_MEDICO) {
+                    titulo = "Turno Cancelado por el Médico";
+                    String motivoTexto = (dto.getMotivo() != null && !dto.getMotivo().trim().isEmpty())
+                        ? " Motivo: " + dto.getMotivo() + "." : "";
+                    descEstado = "fue cancelado por el Dr. " +
+                        guardada.getVeterinario().getUsuario().getNombre() + "." + motivoTexto +
+                        " Por favor, reprograma tu cita.";
+                } else if (dto.getEstado() == EstadoCita.NO_ASISTIO) {
+                    titulo = "Turno Marcado: No Asistió";
+                    descEstado = "fue marcado como no asistido";
                 } else {
                     descEstado = "ha cambiado al estado: " + descEstado;
                 }
@@ -250,6 +265,7 @@ public class CitaService {
         dto.setDuracionMinutos(cita.getDuracionMinutos());
         dto.setEstado(cita.getEstado());
         dto.setNotas(cita.getNotas());
+        dto.setMotivoCancelacion(cita.getMotivoCancelacion());
         dto.setFechaCreacion(cita.getFechaCreacion());
         dto.setPagado(cita.getPagado());
         return dto;

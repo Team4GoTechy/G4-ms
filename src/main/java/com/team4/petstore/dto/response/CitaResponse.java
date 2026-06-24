@@ -17,6 +17,7 @@ public class CitaResponse {
     private Integer duracionMinutos;
     private EstadoCita estado;
     private String notas;
+    private String motivoCancelacion;
     private LocalDateTime fechaCreacion;
     private Boolean pagado;
 
@@ -60,7 +61,10 @@ public class CitaResponse {
 
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
-    
+
+    public String getMotivoCancelacion() { return motivoCancelacion; }
+    public void setMotivoCancelacion(String motivoCancelacion) { this.motivoCancelacion = motivoCancelacion; }
+
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion)  { this.fechaCreacion = fechaCreacion; }
 

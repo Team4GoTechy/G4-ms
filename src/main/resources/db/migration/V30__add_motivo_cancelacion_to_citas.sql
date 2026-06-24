@@ -1,0 +1,1 @@
+ALTER TABLE citas ADD COLUMN IF NOT EXISTS motivo_cancelacion TEXT;
