@@ -15,11 +15,14 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        final String description = "API REST completa para Pet Store. Incluye dos módulos principales:\n" +
-            "- **E-Commerce**: Gestión de productos, categorías, carrito de compras, compras y usuarios\n" +
-            "- **Gestión Veterinaria (Vet-Stock)**: Gestión de insumos médicos, stock, solicitudes de reposición, órdenes de compra y proveedores\n\n" +
-            "Incluye autenticación JWT, control de acceso por roles (ADMIN, VETERINARIO, CLIENTE), " +
-            "registro de usuarios con mascotas, y gestión completa del flujo de insumos veterinarios.";
+        final String description = "API REST completa para Pet Store. Incluye cuatro módulos principales:\n" +
+            "- **E-Commerce**: Gestión de productos, categorías, compras y usuarios (roles CLIENTE, ADMIN)\n" +
+            "- **Gestión Veterinaria**: Mascotas, historial clínico, consultas, prescripciones, citas, internaciones, notificaciones y archivos clínicos (roles ADMIN, VETERINARIO, CLIENTE)\n" +
+            "- **Vet-Stock**: Gestión de insumos médicos, stock, solicitudes de reposición, órdenes de compra, proveedores y consumo (roles ADMIN, VETERINARIO)\n" +
+            "- **Vet-Admin**: Alta y administración de veterinarios, catálogo de servicios, horarios de atención y bloqueos de fecha (rol ADMIN)\n\n" +
+            "Incluye autenticación JWT, control de acceso por roles (ADMIN, VETERINARIO/DOCTOR, CLIENTE), " +
+            "registro de usuarios con mascotas, gestión completa del flujo clínico y de stock veterinario, " +
+            "y upload de imágenes a Cloudinary.";
 
         return new OpenAPI()
                 .info(new Info()

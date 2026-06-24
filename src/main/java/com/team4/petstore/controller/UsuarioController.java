@@ -102,6 +102,11 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Listar todos los usuarios", description = "Devuelve todos los usuarios del sistema con sus roles. Solo ADMIN.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Listado de usuarios"),
+        @ApiResponse(responseCode = "403", description = "Acceso denegado - solo ADMIN")
+    })
     @GetMapping("/list")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UsuarioPerfilResponse>> listarTodos() {

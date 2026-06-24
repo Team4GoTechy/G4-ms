@@ -8,6 +8,11 @@ import com.team4.petstore.repository.MascotaRepository;
 import com.team4.petstore.repository.UsuarioRepository;
 import com.team4.petstore.service.CitaService;
 import com.team4.petstore.service.PrescripcionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,6 +24,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/mascotas")
+@Tag(name = "Mascotas", description = "Gestión de mascotas: listado, actualización y prescripciones")
 public class MascotaController {
 
     private final CitaService citaService;
@@ -36,11 +42,20 @@ public class MascotaController {
         this.prescripcionService = prescripcionService;
     }
 
+    @Operation(summary = "Listar todas las mascotas", description = "Devuelve el listado completo de mascotas del sistema. Endpoint público.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Listado de mascotas")
+    })
     @GetMapping
     public ResponseEntity<List<MascotaResponse>> listarTodas() {
         return ResponseEntity.ok(citaService.obtenerTodasLasMascotas());
     }
 
+    @Operation(summary = "Mis mascotas", description = "Lista las mascotas del usuario autenticado. Cualquier usuario autenticado.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Mascotas del usuario"),
+        @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     @GetMapping("/mis-mascotas")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<MascotaResponse>> listarMisMascotas(Authentication authentication) {
@@ -63,10 +78,16 @@ public class MascotaController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Actualizar mascota", description = "Actualiza una mascota. Solo el dueño o roles ADMIN/VETERINARIO pueden. Acepta campos parciales (solo se actualizan los no nulos).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Mascota actualizada"),
+        @ApiResponse(responseCode = "400", description = "Sin permisos o datos inválidos"),
+        @ApiResponse(responseCode = "404", description = "Mascota no encontrada")
+    })
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MascotaResponse> actualizarMascota(
-            @PathVariable Long id,
+            @Parameter(description = "ID de la mascota") @PathVariable Long id,
             @RequestBody MascotaResponse dto,
             Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -103,9 +124,13 @@ public class MascotaController {
         return ResponseEntity.ok(res);
     }
 
+    @Operation(summary = "Prescripciones de la mascota", description = "Lista todas las prescripciones emitidas para una mascota. Cualquier usuario autenticado.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Listado de prescripciones")
+    })
     @GetMapping("/{mascotaId}/prescripciones")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PrescripcionResponse>> obtenerPrescripciones(@PathVariable Long mascotaId) {
+    public ResponseEntity<List<PrescripcionResponse>> obtenerPrescripciones(@Parameter(description = "ID de la mascota") @PathVariable Long mascotaId) {
         return ResponseEntity.ok(prescripcionService.buscarPorMascota(mascotaId));
     }
 }

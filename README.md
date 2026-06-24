@@ -1,137 +1,463 @@
 # G4-ms - PetStore E-Commerce Backend
 
-Backend del proyecto Pet Store para la capacitación impartida por GoTechy.
-
-## 📋 Descripción del Proyecto
-
-Este proyecto implementa un sistema completo de **e-commerce** y **gestión veterinaria** para una tienda de mascotas, con tres módulos principales:
-
-| Módulo | Descripción |
-|--------|-------------|
-| **E-Commerce** | Gestión de productos, compras y usuarios (CLIENTE, ADMIN) |
-| **Gestión Veterinaria** | Gestión de historial clínico, consultas, citas, internaciones, servicios y veterinarios (VETERINARIO, ADMIN) |
-| **Vet-Stock** | Gestión de insumos médicos, stock, solicitudes y órdenes de compra (VETERINARIO, ADMIN) |
-
-> **🔄 Refactor reciente:** El módulo de veterinarios implementa la **Opción A** del modelo de servicios. Se consolidó `Servicio` (entidad comercial) como única fuente de verdad para "qué ofrece un veterinario" y "qué se agenda en una cita". Anteriormente existía un enum `TipoCita` que se usaba para ambos propósitos, generando duplicación. Ahora `Cita.servicio` es una relación `ManyToOne` a `Servicio`, y `Veterinario.servicios` es una relación `ManyToMany` con `Servicio`. Esto garantiza que un cliente no pueda agendar un servicio que el veterinario no ofrece.
+Backend del proyecto **Pet Store** (e-commerce + gestión veterinaria) para la capacitación de GoTechy.
 
 ---
 
-## 🏥 Módulo de Gestión Veterinaria (Sv-Veterinaria)
+## Tabla de Contenidos
 
-### Descripción
-
-Este módulo implementa la gestión de historial clínico de mascotas, consultas médicas, citas e internaciones dentro del sistema, con control de acceso por roles.
+1. [Módulos del Sistema](#módulos-del-sistema)
+2. [Stack Tecnológico](#stack-tecnológico)
+3. [Inicio Rápido](#inicio-rápido)
+4. [Configuración](#configuración)
+5. [Base de Datos y Migraciones](#base-de-datos-y-migraciones)
+6. [Autenticación y Roles](#autenticación-y-roles)
+7. [Datos de Prueba (Seeds)](#datos-de-prueba-seeds)
+8. [Referencia de Endpoints](#referencia-de-endpoints)
+   - [Auth](#auth)
+   - [E-Commerce](#e-commerce)
+   - [Veterinaria (Consultas / Prescripciones / Citas / Internaciones)](#veterinaria)
+   - [Vet-Stock (Insumos / Stock / Solicitudes / Órdenes / Proveedores)](#vet-stock)
+   - [Vet-Admin (Veterinarios / Servicios / Horarios / Bloqueos)](#vet-admin)
+   - [Notificaciones](#notificaciones)
+   - [Usuarios y Perfil](#usuarios-y-perfil)
+   - [Upload de Imágenes (Cloudinary)](#upload-de-imágenes-cloudinary)
+9. [Modelo de Datos](#modelo-de-datos)
+10. [Estructura del Proyecto](#estructura-del-proyecto)
+11. [Documentación API (Swagger)](#documentación-api-swagger)
 
 ---
 
-## 👨‍⚕️ Módulo de Administración de Veterinarios (Vet-Admin)
+## Módulos del Sistema
 
-### Descripción
+| Módulo | Descripción | Roles |
+|---|---|---|
+| **E-Commerce** | Productos, categorías, carrito implícito vía compras, gestión de órdenes | `CLIENTE`, `ADMIN` |
+| **Gestión Veterinaria** | Mascotas, historial clínico, consultas, prescripciones, citas, internaciones, notificaciones, archivos clínicos | `ADMIN`, `VETERINARIO` (alias `DOCTOR`), `CLIENTE` |
+| **Vet-Stock** | Insumos médicos, stock, movimientos, solicitudes de reposición, órdenes de compra, proveedores, consumo | `ADMIN`, `VETERINARIO` |
+| **Vet-Admin** | Alta/edición de veterinarios, catálogo de `Servicio`s, horarios, bloqueos de fecha | `ADMIN` |
 
-Este módulo permite a los **administradores** gestionar el alta, edición y disponibilidad de los veterinarios registrados en el sistema. Los veterinarios se asocian al catálogo de `Servicios` (entidad comercial con precio) que pueden ofrecer, garantizando consistencia con las citas agendadas.
+> **Roles:** existen dos alias para veterinario — `ROLE_DOCTOR` y `ROLE_VETERINARIO` — ambos funcionan de forma intercambiable en el sistema.
 
-### Funcionalidades Principales
+---
 
-| Funcionalidad | Descripción |
-|---------------|-------------|
-| **Veterinarios** | CRUD completo de veterinarios con datos de cuenta y perfil profesional |
-| **Servicios Ofrecidos** | Asocia el veterinario a los `Servicios` del catálogo que puede ofrecer (Many-to-Many) |
-| **Horarios de Atención** | Configuración semanal de horarios (Lunes a Domingo) |
-| **Bloqueos de Fecha** | Registro de vacaciones/ausencias que bloquean automáticamente la agenda |
+## Stack Tecnológico
 
-### Modelo de Datos (Vet-Admin)
+| Tecnología | Versión |
+|---|---|
+| Spring Boot | 3.4.13 |
+| Java | 21 (LTS) |
+| Spring Security | JWT (jjwt 0.12.6) |
+| Spring Data JPA | - |
+| PostgreSQL | 15 |
+| Flyway | Core + flyway-database-postgresql |
+| Springdoc OpenAPI | 2.8.4 (Swagger UI) |
+| Cloudinary | cloudinary-http45 1.34.0 |
+| Lombok | **No utilizado** (getters/setters manuales en todo el proyecto) |
 
-```mermaid
-erDiagram
-    USUARIO ||--|| VETERINARIO : es
-    VETERINARIO {
-        Long id PK
-        Long usuario_id FK
-        string matricula
-        string especialidad
-        string bio
-        boolean activo
-    }
-    VETERINARIO ||--o{ HORARIO_ATENCION : tiene
-    HORARIO_ATENCION {
-        Long id PK
-        Long veterinario_id FK
-        int dia_semana
-        time hora_inicio
-        time hora_fin
-        boolean trabaja
-    }
-    VETERINARIO ||--o{ BLOQUEO_FECHA : tiene
-    BLOQUEO_FECHA {
-        Long id PK
-        Long veterinario_id FK
-        date fecha_inicio
-        date fecha_fin
-        string motivo
-    }
-    VETERINARIO }o--o{ SERVICIO : ofrece
-    SERVICIO {
-        Long id PK
-        string nombre
-        string descripcion
-        decimal precio
-    }
-    CITA }o--|| SERVICIO : referencia
-    CITA }o--|| VETERINARIO : agendada_con
+---
+
+## Inicio Rápido
+
+### Requisitos
+- Java 21+
+- Maven 3.8+ (o usar `./mvnw`)
+- PostgreSQL 15+ (o usar Docker)
+
+### Pasos
+
+1. **Configurar variables de entorno** (ver [Configuración](#configuración)).
+
+2. **Levantar la base de datos con Docker:**
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Levantar la aplicación:**
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+   O en Windows con el script automático:
+   ```powershell
+   .\dev-up.ps1
+   ```
+
+4. **Verificar:** la API queda en `http://localhost:8080`. Swagger UI en `http://localhost:8080/swagger-ui.html`.
+
+> **Tip Windows:** si el puerto está ocupado o el JAR queda bloqueado:
+> ```powershell
+> Get-Process -Name java | Stop-Process -Force
+> ```
+
+---
+
+## Configuración
+
+Variables de entorno (soportadas vía `.env` + `dev-up.ps1`):
+
+```bash
+# Base de datos
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=petshop_ecommerce
+DB_USER=petshop_admin
+DB_PASSWORD=petshop_secure_pass
+
+# JWT (HMAC-SHA, 256 bits mínimo)
+JWT_SECRET=PETSHOP_SECRET_KEY_256_BITS_MIN_FOR_HS256_ALGORITHM_2026
+
+# Cloudinary (uploads de imágenes)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-### Endpoints Principales (Vet-Admin)
+**CORS:** habilitado solo para `http://localhost:4200` (Angular dev server) con credenciales.
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/api/v1/veterinarios` | Listar veterinarios activos | ADMIN |
-| GET | `/api/v1/veterinarios/todos` | Listar todos los veterinarios | ADMIN |
-| GET | `/api/v1/veterinarios/{id}` | Obtener veterinario por ID | ADMIN |
-| POST | `/api/v1/veterinarios` | Crear veterinario | ADMIN |
-| PUT | `/api/v1/veterinarios/{id}` | Actualizar veterinario | ADMIN |
-| DELETE | `/api/v1/veterinarios/{id}` | Eliminar veterinario (soft delete) | ADMIN |
-| PATCH | `/api/v1/veterinarios/{id}/activo` | Activar/Desactivar veterinario | ADMIN |
-| GET | `/api/v1/veterinarios/{id}/horarios` | Listar horarios | ADMIN |
-| PUT | `/api/v1/veterinarios/{id}/horarios` | Actualizar horarios (7 días) | ADMIN |
-| GET | `/api/v1/veterinarios/{id}/bloqueos` | Listar bloqueos | ADMIN |
-| POST | `/api/v1/veterinarios/{id}/bloqueos` | Crear bloqueo | ADMIN |
-| DELETE | `/api/v1/veterinarios/{id}/bloqueos/{bloqueoId}` | Eliminar bloqueo | ADMIN |
+**Puerto:** `8080` (configurable vía `server.port`).
 
-### Ejemplo: Crear Veterinario
+**Uploads estáticos:** la carpeta `${app.upload.dir:uploads}` se expone en `/uploads/**`.
+
+---
+
+## Base de Datos y Migraciones
+
+Flyway ejecuta **30 migraciones** en orden desde `src/main/resources/db/migration/`:
+
+| Rango | Descripción |
+|---|---|
+| V1–V3 | Roles, usuarios, join `usuarios_roles` |
+| V4–V7 | Categorías, productos, compras y detalles |
+| V8 | Mascotas |
+| V9–V10 | Imagen y unidad de medida en productos |
+| V11–V12 | Seeds de roles `DOCTOR` y `VETERINARIO` |
+| V13 | Proveedores |
+| V14–V18 | Insumos, stock, movimientos, solicitudes de reposición, órdenes de compra |
+| V19 | Notificaciones |
+| V20–V23 | Veterinarios, horarios, bloqueos |
+| V24 | Citas |
+| V25 | `peso_kg` en productos |
+| V26 | Tabla `servicios` (catálogo comercial) |
+| V27 | Drop de la join-table vieja `veterinario_servicios` |
+| V28 | Re-crea `servicio_veterinario` (join correcta) |
+| V29 | Migra `citas.tipo` (enum viejo) → `citas.servicio_id` (FK) |
+| V30 | Agrega `motivo_cancelacion` a citas |
+
+> **Importante:** la tabla `citas` ya no tiene el campo `tipo_cita` (eliminado en V29). El campo `servicio_id` (FK a `servicios`) es el único válido.
+
+---
+
+## Autenticación y Roles
+
+- **JWT en header:** `Authorization: Bearer <token>`
+- **Expiración:** 24 h (`app.jwt.expiration-ms=86400000`)
+- **Algoritmo:** HMAC-SHA (configurable vía `app.jwt.secret`)
+- **Roles disponibles:**
+  - `ROLE_ADMIN`
+  - `ROLE_VETERINARIO` (= `ROLE_DOCTOR`, ambos válidos)
+  - `ROLE_CLIENTE`
+
+**Endpoints públicos** (no requieren token):
+- `POST /auth/login`, `POST /auth/register`, `GET /auth/check-email`
+- `GET /productos/**`
+- `GET /categorias/**`
+- `GET /insumos/stock/disponibles`
+- `GET /api/v1/mascotas` (lista completa — usado por el frontend público)
+- Swagger: `/swagger-ui/**`, `/v3/api-docs/**`, `/api-docs/**`
+
+Todo lo demás requiere JWT. Las anotaciones `@PreAuthorize` están a nivel de método en cada controller.
+
+---
+
+## Datos de Prueba (Seeds)
+
+`DataSeederConfig` crea automáticamente al iniciar (solo fuera del perfil `test`):
+
+### Usuarios
+| Email | Password | Rol | Datos extra |
+|---|---|---|---|
+| `admin@petshop.com` | `12345678` | `ADMIN` | — |
+| `doctor@petshop.com` | `12345678` | `VETERINARIO` | Perfil `Veterinario`: matrícula `VET-12345`, especialidad `Clínica General` |
+| `cliente@petshop.com` | `12345678` | `CLIENTE` | 2 mascotas: **Max** (Perro, Macho), **Nube** (Gato, Hembra) |
+
+### Proveedores
+- Distribuidora Medica ABC — `ventas@distmedicaabc.com`
+- Farmacia Veterinaria Norte — `info@farmavetnorte.com`
+- Insumos Veterinarios del Sur — `pedidos@ivsur.com`
+
+### Insumos (10, con stock inicial)
+Vacuna Antirrabica, Vacuna Sextuple, Vacuna Triple Felina, Antibiótico Amoxicilina, Antiparasitario Ivermectina, Suero Fisiológico, Gasas Estériles, Jeringas 5ml, Anestésico Ketamina, Antiinflamatorio Meloxicam.
+
+---
+
+## Referencia de Endpoints
+
+> **Convención:** los endpoints bajo `/api/v1/*` están versionados; los demás (`/auth`, `/productos`, `/compras`, `/insumos`, etc.) no lo están.
+
+### Auth
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/auth/login` | Público | Login. Devuelve `AuthResponse` con `token` JWT. |
+| `POST` | `/auth/register` | Público | Registro de cliente. Si `cantidadMascotas >= 3`, `familyName` es obligatorio. Acepta mascotas iniciales. |
+| `GET` | `/auth/check-email?email=` | Público | Devuelve `true` si el email ya está registrado. |
+
+**`LoginRequest`:** `email` (`@NotBlank @Email`), `password` (`@NotBlank`).
+
+**`RegisterRequest`:** `nombre`, `apellido`, `edad`, `avatar`, `direccion`, `celular`, `email`, `password` (min 6), `cantidadMascotas` (default 0), `familyName`, `mascotas: List<MascotaRequest>`.
+
+**`AuthResponse`:** `id`, `nombre`, `apellido`, `avatar`, `direccion`, `celular`, `email`, `token`, `nombreMascota`, `tipoMascota`, `cantidadMascotas`.
+
+---
+
+### E-Commerce
+
+#### Categorías (`/categorias`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/categorias` | Público | Lista todas las categorías. |
+| `GET` | `/categorias/{id}` | Público | Obtiene una categoría. |
+| `POST` | `/categorias` | Público (⚠️) | Crea categoría. Body: `{ "nombre", "descripcion" }` (DTO interno). |
+| `PUT` | `/categorias/{id}` | Público (⚠️) | Actualiza categoría. |
+| `DELETE` | `/categorias/{id}` | Público (⚠️) | Elimina categoría. |
+
+> ⚠️ Los endpoints de escritura de categorías **no tienen `@PreAuthorize`**. Considerar protegerlos a `ADMIN` antes de producción.
+
+#### Productos (`/productos`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/productos?categoriaId=` | Público | Lista productos. Filtro opcional por `categoriaId`. |
+| `GET` | `/productos/{id}` | Público | Obtiene un producto. |
+| `POST` | `/productos` | `ADMIN` | Crea producto. |
+| `PUT` | `/productos/{id}` | `ADMIN` | Actualiza producto. |
+| `DELETE` | `/productos/{id}` | `ADMIN` | Elimina producto. |
+
+**`ProductoRequest`:** `nombre`, `codigo`, `descripcion`, `precio` (`@DecimalMin(0.01)`), `stock` (`@Min(0)`), `unidadMedida`, `categoriaId`, `imagenUrl`, `pesoKg`.
+
+**`ProductoResponse`:** incluye `id`, `categoria` (nombre), `activo`, `fechaCreacion`.
+
+#### Compras (`/compras`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/compras` | Auth | Crea compra para el usuario autenticado. Descuenta stock automáticamente. |
+| `GET` | `/compras` | Auth | Historial del usuario autenticado. |
+| `GET` | `/compras/usuario/{usuarioId}` | `ADMIN` | Historial de un usuario. |
+| `GET` | `/compras/todas` | `ADMIN` | Todas las compras del sistema. |
+| `PUT` | `/compras/{id}/estado?estado=` | `ADMIN` | Cambia estado. Valores: `PENDIENTE`, `CONFIRMADO`, `ENTREGADO`, `CANCELADO`. **Al pasar a `CANCELADO` el stock se restaura automáticamente.** |
+
+**`CompraRequest`:** `metodoPago` (string), `productos: List<{ productoId, cantidad >= 1 }>`.
+
+**`CompraResponse`:** `id`, `usuarioId`, `fecha`, `total`, `metodoPago`, `estado`, `productos: List<{ productoId, nombre, cantidad, precioUnitario }>`.
+
+**Estados (`EstadoCompra`):** `PENDIENTE`, `CONFIRMADO`, `ENTREGADO`, `CANCELADO`.
+
+---
+
+### Veterinaria
+
+#### Mascotas (`/api/v1/mascotas`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/mascotas` | **Público** | Lista **todas** las mascotas del sistema. |
+| `GET` | `/api/v1/mascotas/mis-mascotas` | Auth | Mascotas del usuario autenticado. |
+| `PUT` | `/api/v1/mascotas/{id}` | Auth | Actualiza mascota. Solo el dueño o roles `ADMIN`/`VETERINARIO`/`DOCTOR` pueden. Acepta `MascotaResponse` como body; solo se actualizan campos no nulos. |
+| `GET` | `/api/v1/mascotas/{mascotaId}/prescripciones` | Auth | Lista prescripciones de una mascota. |
+
+**`MascotaResponse`:** `id`, `nombre`, `sexo`, `tipo`, `raza`, `fechaNacimiento`, `peso`. (También se usa como request del PUT.)
+
+#### Historial Clínico (`/api/v1/mascotas`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/mascotas/{id}/historial-clinico?page=&size=&sort=` | `ADMIN`, `VETERINARIO`, `CLIENTE` | Historial paginado de consultas de la mascota. |
+
+#### Consultas (`/api/v1/consultas`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/consultas` | `ADMIN`, `VETERINARIO` | Registra consulta. |
+| `GET` | `/api/v1/consultas/{id}` | `ADMIN`, `VETERINARIO` | Obtiene consulta. |
+| `POST` | `/api/v1/consultas/{id}/prescripcion` | `ADMIN`, `VETERINARIO` | Agrega prescripción a la consulta. |
+| `GET` | `/api/v1/consultas/{id}/prescripcion` | `ADMIN`, `VETERINARIO` | Obtiene la prescripción de la consulta. |
+
+> **Nota:** el README previo listaba `PUT` y `DELETE` para consultas que **no existen** en el código.
+
+**`ConsultaRequest`:** `citaId` (opcional), `mascotaId`, `veterinarioId`, `motivo`, `anamnesis`, `examenFisico`, `diagnostico`, `tratamiento`, `peso` (BigDecimal), `temperatura`, `frecuenciaCardiaca`, `frecuenciaRespiratoria`, `trc`, `notas`.
+
+**`PrescripcionRequest`:** `consultaId`, `observaciones`, `detalles: List<DetallePrescripcionRequest>`.
+
+**`DetallePrescripcionRequest`:** `insumoId`, `dosis`, `frecuencia`, `duracion` (los tres `@NotBlank`), `viaAdministracion`, `instrucciones`.
+
+#### Citas (`/api/v1/citas`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/citas` | `ADMIN`, `VETERINARIO`, `CLIENTE` | Crea cita. **Valida que el veterinario ofrezca el `servicioId`**. |
+| `GET` | `/api/v1/citas/{id}` | `ADMIN`, `VETERINARIO` | Obtiene cita. |
+| `GET` | `/api/v1/citas?veterinarioId=&fecha=YYYY-MM-DD` | `ADMIN`, `VETERINARIO`, `CLIENTE` | Agenda de un veterinario en un día. |
+| `GET` | `/api/v1/citas/agenda/mes?veterinarioId=&mes=YYYY-MM` | `ADMIN`, `VETERINARIO` | Agenda mensual. |
+| `GET` | `/api/v1/citas/todas?veterinarioId=` | `ADMIN`, `VETERINARIO` | Todas las citas del veterinario. |
+| `PATCH` | `/api/v1/citas/{id}/estado` | `ADMIN`, `VETERINARIO` | Cambia estado. Body: `EstadoCitaRequest`. |
+| `GET` | `/api/v1/citas/mis-citas` | `CLIENTE` | Citas del cliente autenticado. |
+| `PATCH` | `/api/v1/citas/{id}/pagar` | `CLIENTE` | Marca la cita como pagada. |
+
+**`CitaRequest`:** `mascotaId`, `veterinarioId`, `servicioId` (`@NotNull`), `fechaHora` (LocalDateTime), `duracionMinutos` (default 30), `notas`.
+
+**`EstadoCitaRequest`:** `estado` (enum `EstadoCita`), `motivo` (string, se guarda en `motivoCancelacion`).
+
+**`CitaResponse`:** `id`, `mascotaId`, `mascotaNombre`, `veterinarioId`, `veterinarioNombre`, `veterinarioAvatar`, `clienteId`, `clienteNombre`, `servicio: ServicioResponse`, `fechaHora`, `duracionMinutos`, `estado`, `notas`, `motivoCancelacion`, `fechaCreacion`, `pagado`.
+
+**Estados (`EstadoCita`):** `PENDIENTE`, `CONFIRMADA`, `EN_PROGRESO`, `COMPLETADA`, `CANCELADA`, `CANCELADA_POR_MEDICO`, `NO_ASISTIO`.
+
+#### Internaciones (`/api/v1/internaciones`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/internaciones` | `ADMIN`, `VETERINARIO` | Ingresa mascota. Body: `InternacionRequest`. |
+| `GET` | `/api/v1/internaciones/activas` | `ADMIN`, `VETERINARIO` | Lista internaciones activas. |
+| `POST` | `/api/v1/internaciones/{id}/evolucion` | `ADMIN`, `VETERINARIO` | Registra evolución clínica. Body: `EvolucionRequest`. |
+| `PATCH` | `/api/v1/internaciones/{id}/alta` | `ADMIN`, `VETERINARIO` | Da de alta. Body opcional: `AltaRequest { indicacionesAlta }`. |
+| `GET` | `/api/v1/internaciones/pendientes-reingreso` | `ADMIN`, `VETERINARIO` | Lista con reingreso solicitado. |
+| `GET` | `/api/v1/internaciones/mascota/{mascotaId}` | Auth | Por mascota. |
+| `POST` | `/api/v1/internaciones/solicitar-reingreso` | Auth | Cualquier usuario puede solicitar. Body: `ReingresoRequest { mascotaId, notasCliente }`. |
+| `PATCH` | `/api/v1/internaciones/{id}/confirmar-reingreso?jaulaId=` | `ADMIN`, `VETERINARIO` | Confirma reingreso asignando jaula. |
+
+**`InternacionRequest`:** `mascotaId`, `veterinarioId`, `motivo`, `jaulaId`, `notas`.
+
+**`EvolucionRequest`:** `observacion`, `peso`, `temperatura`.
+
+**`InternacionResponse`:** `id`, `mascotaId`, `mascotaNombre`, `veterinarioId`, `veterinarioNombre`, `motivo`, `fechaIngreso`, `fechaAlta`, `jaulaId`, `estado`, `notas`, `indicacionesAlta`, `notasCliente`, `evoluciones: List<EvolucionResponse>`.
+
+**Estados (`EstadoInternacion`):** `ACTIVA`, `ALTA`, `REINGRESO_SOLICITADO`.
+
+---
+
+### Vet-Stock
+
+> Los paths `/insumos` y `/insumos/*` están repartidos entre `InsumoController` (CRUD del catálogo) y `StockInsumoController` (stock, movimientos, consumo). No hay colisión.
+
+#### Insumos — Catálogo (`/insumos`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/insumos` | `ADMIN`, `VETERINARIO` | Lista insumos activos. |
+| `GET` | `/insumos/{id}` | `ADMIN`, `VETERINARIO` | Obtiene insumo. |
+| `POST` | `/insumos` | `ADMIN` | Crea insumo (crea su `StockInsumo` en 0). |
+| `PUT` | `/insumos/{id}` | `ADMIN` | Actualiza. |
+| `DELETE` | `/insumos/{id}` | `ADMIN` | **Soft delete** (`activo=false`). |
+
+**`InsumoRequest`:** `nombre`, `descripcion`, `unidadMedida`, `precioUnitario` (`@DecimalMin(0.01)`), `stockMinimo` (`@Min(0)`).
+
+#### Stock (`/insumos/stock`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/insumos/stock` | `ADMIN`, `VETERINARIO` | Stock de todos los insumos. |
+| `GET` | `/insumos/stock/{id}` | `ADMIN`, `VETERINARIO` | Stock de un insumo. |
+| `GET` | `/insumos/stock/{id}/historial` | `ADMIN`, `VETERINARIO` | Historial de movimientos. |
+| `GET` | `/insumos/stock/disponibles` | **Público** | Stock para mostrar en frontend. |
+| `POST` | `/insumos/consumo` | `VETERINARIO` | Registra consumo. Body: `ConsumoRequest`. |
+
+**`ConsumoRequest`:** `items: List<{ insumoId, cantidad >= 1 }>`, `descripcion`.
+
+**`StockInsumoResponse`:** `insumoId`, `nombreInsumo`, `cantidadActual`, `stockMinimo`, **`alertaStock`** (true si `cantidadActual <= stockMinimo`), `unidadMedida`, `precioUnitario`.
+
+**`MovimientoInsumoResponse`:** `id`, `insumoId`, `nombreInsumo`, `tipo` (`ENTRADA`/`SALIDA`), `cantidad`, `precioUnitario`, `fecha`, `descripcion`, `referenciaId`.
+
+#### Solicitudes de Reposición (`/solicitudes`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/solicitudes` | `VETERINARIO` | Mis solicitudes (del veterinario autenticado). |
+| `GET` | `/solicitudes/todas` | `ADMIN` | Todas. |
+| `GET` | `/solicitudes/veterinario/{veterinarioId}` | `ADMIN` | Por veterinario. |
+| `GET` | `/solicitudes/{id}` | `ADMIN`, `VETERINARIO` | Por id. |
+| `POST` | `/solicitudes` | `VETERINARIO` | Crea solicitud. Body: `SolicitudReposicionRequest`. |
+| `PUT` | `/solicitudes/{id}/aprobar?proveedorId=` | `ADMIN` | Aprueba y **genera automáticamente una `OrdenCompra`**. |
+| `PUT` | `/solicitudes/{id}/cancelar` | `ADMIN` | Cancela (solo si `PENDIENTE`). |
+
+**`SolicitudReposicionRequest`:** `detalles: List<{ insumoId, cantidadSolicitada >= 1 }>`.
+
+**Estados (`EstadoSolicitud`):** `PENDIENTE`, `APROBADA`, `CANCELADA`.
+
+#### Órdenes de Compra (`/ordenes-compra`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/ordenes-compra` | `ADMIN` | Lista todas. |
+| `POST` | `/ordenes-compra` | `ADMIN` | Crea orden directamente. Body: `OrdenCompraRequest`. |
+| `GET` | `/ordenes-compra/{id}` | `ADMIN` | Por id. |
+| `PUT` | `/ordenes-compra/{id}/completar` | `ADMIN` | Completa (recibe mercadería). Body: `OrdenCompraCompletarRequest`. Actualiza precios reales y stock. |
+| `PUT` | `/ordenes-compra/{id}/cancelar` | `ADMIN` | Cancela (solo si `PENDIENTE`). |
+
+**`OrdenCompraRequest`:** `proveedorId`, `items: List<{ insumoId, cantidad >= 1 }>`. Se crea en `PENDIENTE` con precios en 0.
+
+**`OrdenCompraCompletarRequest`:** `items: List<{ insumoId, cantidad, precioUnitario }>`. El precio del insumo se actualiza con el real.
+
+**Estados (`EstadoOrdenCompra`):** `PENDIENTE`, `COMPLETADA`, `CANCELADA`.
+
+#### Proveedores (`/proveedores`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/proveedores` | `ADMIN` | Lista activos. |
+| `GET` | `/proveedores/{id}` | `ADMIN` | Por id. |
+| `POST` | `/proveedores` | `ADMIN` | Crea. |
+| `PUT` | `/proveedores/{id}` | `ADMIN` | Actualiza. |
+| `DELETE` | `/proveedores/{id}` | `ADMIN` | **Soft delete**. |
+
+**`ProveedorRequest`:** `nombre` (`@NotBlank @Size(max=150)`), `email`, `telefono`.
+
+---
+
+### Vet-Admin
+
+#### Veterinarios (`/api/v1/veterinarios`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/veterinarios` | Auth | Lista veterinarios **activos**. |
+| `GET` | `/api/v1/veterinarios/todos` | `ADMIN` | Lista todos (activos + inactivos). |
+| `GET` | `/api/v1/veterinarios/{id}` | `ADMIN` | Por id. |
+| `POST` | `/api/v1/veterinarios` | `ADMIN` | Crea veterinario (incluye cuenta de usuario). |
+| `PUT` | `/api/v1/veterinarios/{id}` | `ADMIN` | Actualiza. |
+| `DELETE` | `/api/v1/veterinarios/{id}` | `ADMIN` | **Soft delete**. |
+| `PATCH` | `/api/v1/veterinarios/{id}/activo` | `ADMIN` | Activa/desactiva. Body: `CambiarEstadoRequest { activo: Boolean }`. |
+| `GET` | `/api/v1/veterinarios/{id}/horarios` | `ADMIN` | Lista horarios. |
+| `PUT` | `/api/v1/veterinarios/{id}/horarios` | `ADMIN` | Reemplaza los 7 días. |
+| `GET` | `/api/v1/veterinarios/{id}/bloqueos` | `ADMIN` | Lista bloqueos. |
+| `POST` | `/api/v1/veterinarios/{id}/bloqueos` | `ADMIN` | Crea bloqueo. Rechaza fechas solapadas. |
+| `DELETE` | `/api/v1/veterinarios/{id}/bloqueos/{bloqueoId}` | `ADMIN` | Elimina bloqueo. |
+
+**`VeterinarioRequest`:** `nombre`, `apellido`, `email`, `password` (min 6), `telefono`, `matricula` (único), `especialidad`, `bio`, `servicioIds: Set<Long>` (de `Servicio`s existentes en el catálogo).
+
+**`VeterinarioResponse`:** `id`, `usuarioId`, `nombreCompleto`, `avatar`, `email`, `telefono`, `matricula`, `especialidad`, `bio`, `activo`, **`servicios: Set<ServicioResponse>`**, `fechaCreacion`.
+
+#### Servicios (`/api/v1/servicios`)
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/servicios` | `ADMIN` | Crea servicio. |
+| `GET` | `/api/v1/servicios` | `ADMIN`, `VETERINARIO`, `CLIENTE` | Lista todos. |
+| `PUT` | `/api/v1/servicios/{id}` | `ADMIN` | Actualiza. |
+| `DELETE` | `/api/v1/servicios/{id}` | `ADMIN` | Elimina. |
+| `GET` | `/api/v1/servicios/veterinarios` | `ADMIN` | Lista todos los veterinarios (usado para asignar). |
+| `GET` | `/api/v1/servicios/veterinario/{veterinarioId}` | `ADMIN`, `VETERINARIO`, `CLIENTE` | Servicios ofrecidos por un veterinario. |
+
+**`ServicioRequest`:** `nombre`, `descripcion`, `precio`, `veterinarioIds: List<Long>`.
+
+**`ServicioResponse`:** `id`, `nombre`, `descripcion`, `precio`, `veterinarios: List<VeterinarioResponse>`.
+
+#### Horarios de Atención
+
+Cuerpo de `PUT /api/v1/veterinarios/{id}/horarios`:
 
 ```json
-POST /api/v1/veterinarios
-{
-  "nombre": "Juan",
-  "apellido": "Perez",
-  "email": "juan.perez@petstore.com",
-  "password": "securePassword123",
-  "telefono": "351-555-1234",
-  "matricula": "VET-2024-001",
-  "especialidad": "Cirugía General",
-  "bio": "Médico veterinario con más de 10 años de experiencia en cirugía general y emergencia.",
-  "servicioIds": [1, 2, 3]
-}
-```
-
-> **Nota:** Los `servicioIds` deben corresponder a IDs de `Servicios` existentes en el catálogo (creados vía `POST /api/v1/servicios`).
-
-### Validación de Negocio (Cita ↔ Veterinario ↔ Servicio)
-
-Cuando se agenda una cita, el sistema valida que el veterinario esté asociado al servicio solicitado:
-
-```java
-if (!veterinario.getServicios().contains(servicio)) {
-    throw new BadRequestException("El veterinario no ofrece este servicio");
-}
-```
-
-Esto garantiza que un cliente no pueda agendar, por ejemplo, una cirugía con un veterinario que solo ofrece consultas.
-
-### Ejemplo: Actualizar Horarios
-
-```json
-PUT /api/v1/veterinarios/1/horarios
 {
   "horarios": [
     { "diaSemana": 1, "trabaja": true, "horaInicio": "08:00", "horaFin": "12:00" },
@@ -146,656 +472,254 @@ PUT /api/v1/veterinarios/1/horarios
 }
 ```
 
-### Ejemplo: Crear Bloqueo de Vacaciones
+#### Bloqueos de Fecha
+
+Cuerpo de `POST /api/v1/veterinarios/{id}/bloqueos`:
 
 ```json
-POST /api/v1/veterinarios/1/bloqueos
-{
-  "fechaInicio": "2024-07-10",
-  "fechaFin": "2024-07-15",
-  "motivo": "Vacaciones anuales"
-}
+{ "fechaInicio": "2026-07-10", "fechaFin": "2026-07-15", "motivo": "Vacaciones anuales" }
 ```
 
 ---
 
-### Funcionalidades Principales
+### Notificaciones
 
-| Funcionalidad | Descripción |
-|---------------|-------------|
-| **Mascotas** | Gestión de mascotas con datos básicos y vínculo con su dueño |
-| **Historial Clínico** | Listado paginado de consultas asociadas a cada mascota |
-| **Consultas** | Registro de consultas médicas con diagnóstico, tratamiento y fecha |
-| **Citas** | Gestión de citas con validación de horarios no superpuestos |
-| **Internaciones** | Control de internaciones con evoluciones registradas |
-| **Prescripciones** | Gestión de prescripciones médicas vinculadas a consultas |
+Base: `/api/v1/notificaciones`
 
-### Modelo de Datos (Veterinaria)
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/notificaciones` | Auth | Mis notificaciones. |
+| `GET` | `/api/v1/notificaciones/no-leidas` | Auth | Solo no leídas. |
+| `GET` | `/api/v1/notificaciones/sin-leer/cantidad` | Auth | Devuelve `{ "cantidad": <long> }`. |
+| `PATCH` | `/api/v1/notificaciones/{id}/leer` | Auth | Marca una como leída. |
+| `PATCH` | `/api/v1/notificaciones/marcar-todas-leidas` | Auth | Marca todas. Devuelve `{ "mensaje": "..." }`. |
+
+**`NotificacionResponse`:** `id`, `titulo`, `mensaje`, `tipo`, `leido`, `fechaCreacion`.
+
+**Tipos (`TipoNotificacion`):** `SISTEMA`, `WHATSAPP`, `EMAIL`.
+
+---
+
+### Usuarios y Perfil
+
+Base: `/usuario`
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/usuario/perfil` | Auth | Perfil del usuario autenticado (sin roles). |
+| `PUT` | `/usuario/avatar` | Auth | Sube avatar (multipart, `file`, máx 5MB). Devuelve `{ "url": "..." }`. |
+| `GET` | `/usuario/list` | `ADMIN` | Lista todos los usuarios (con roles). |
+| `PUT` | `/usuario/admin/{id}/avatar` | `ADMIN` | Sube avatar de cualquier usuario. |
+
+**`UsuarioPerfilResponse` (DTO interno en `UsuarioController`):** `id`, `nombre`, `apellido`, `email`, `avatar`, `direccion`, `celular`, `roles: Set<String>` (opcional, solo en `list`).
+
+---
+
+### Upload de Imágenes (Cloudinary)
+
+Base: `/upload`
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/upload/producto` | `ADMIN` | Sube imagen de producto. |
+| `POST` | `/upload/avatar` | Auth | Sube avatar. |
+| `POST` | `/upload/mascota` | Auth | Sube imagen de mascota. |
+
+Todos reciben `multipart/form-data` con campo `file`. Devuelven `{ "url": "<cloudinary-url>" }`.
+
+> Para avatares por defecto, `CloudinaryConfig` define URLs para los roles `admin`, `doctor` y `cliente` (configurables en `application.yml`).
+
+---
+
+## Modelo de Datos
 
 ```mermaid
 erDiagram
-    MASCOTA {
-        Long id PK
-        string nombre
-        string especie
-        string sexo
-        Long fk_dueno FK
-    }
-    CONSULTA {
-        Long id PK
-        Long fk_mascota FK
-        Long fk_veterinario FK
-        date fecha
-        string diagnostico
-        string tratamiento
-    }
     USUARIO ||--o{ MASCOTA : tiene
-    MASCOTA ||--o{ CONSULTA : tiene
-    CONSULTA }o--|| USUARIO : realizada_por
-```
-
-### Endpoints Principales (Sv-Veterinaria)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/api/v1/mascotas/{id}/historial-clinico` | Listar historial clínico | ADMIN, VETERINARIO |
-| POST | `/api/v1/consultas` | Registrar nueva consulta | ADMIN, VETERINARIO |
-| PUT | `/api/v1/consultas/{id}` | Actualizar consulta | ADMIN, VETERINARIO |
-| DELETE | `/api/v1/consultas/{id}` | Eliminar consulta | ADMIN |
-| POST | `/api/v1/citas` | Crear cita (valida que el veterinario ofrezca el servicio) | ADMIN, VETERINARIO |
-| GET | `/api/v1/citas/veterinario/{id}/mes?anio=&mes=` | Agenda del mes | ADMIN, VETERINARIO |
-| POST | `/api/v1/internaciones` | Crear internación | ADMIN, VETERINARIO |
-| PUT | `/api/v1/internaciones/{id}/evolucion` | Agregar evolución | ADMIN, VETERINARIO |
-
-### Ejemplo: Crear Cita
-
-```json
-POST /api/v1/citas
-{
-  "mascotaId": 1,
-  "veterinarioId": 5,
-  "servicioId": 2,
-  "fechaHora": "2026-07-15T10:00:00",
-  "duracionMinutos": 30,
-  "notas": "Control de rutina"
-}
-```
-
----
-
-## 📦 Módulo E-Commerce
-
-### Funcionalidades Principales
-
-| Funcionalidad | Descripción |
-|---------------|-------------|
-| **Productos** | Gestión de productos con código único, precios, stock y categorías |
-| **Categorías** | Organización de productos por categorías |
-| **Carrito de Compras** | Agregar, modificar y eliminar items del carrito |
-| **Compras** | Proceso completo de compra con validación de stock |
-| **Usuarios** | Sistema de usuarios con roles (CLIENTE, ADMIN) |
-| **Autenticación** | JWT-based authentication |
-| **Estado de Compras** | ADMIN puede cambiar estado (PENDIENTE → CONFIRMADO → ENTREGADO, o CANCELADO) |
-| **Stock Automático** | Al cancelar compra, el stock se restaura automáticamente |
-
----
-
-## 🏥 Módulo de Gestión Veterinaria (Vet-Stock)
-
-### Descripción
-
-Este módulo permite a los **veterinarios** gestionar los insumos médicos de la clínica, solicitando reposición cuando el stock está bajo. Los **administradores** aprobam las solicitudes y gestionan las órdenes de compra a proveedores.
-
-### Roles y Permisos
-
-| Rol | Permisos |
-|-----|----------|
-| **VETERINARIO** | Ver stock, crear solicitudes de reposición, registrar consumo de insumos |
-| **ADMIN** | Todas las anteriores + crear/editar insumos, aprobar/cancelar solicitudes, gestionar proveedores, completar/cancelar órdenes |
-
-### Flujo de Trabajo
-
-```
-┌─────────────┐     Solicita      ┌─────────────┐     Aprueba      ┌─────────────┐
-│  VETERINARIO │ ───────────────► │  SOLICITUD   │ ───────────────► │   ORDEN     │
-│              │                  │  (PENDIENTE)  │                  │  COMPRA     │
-└─────────────┘                  └─────────────┘                  │ (PENDIENTE)  │
-                                                                    └──────┬──────┘
-                                                                           │
-                                                                   ┌───────▼───────┐
-                                                                   │  ADMIN recibe  │
-                                                                   │  mercadería   │
-                                                                   └───────┬───────┘
-                                                                           │
-                                                            ┌──────────────▼──────────────┐
-                                                            │ COMPLETAR orden             │
-                                                            │ - Actualiza precios reales  │
-                                                            │ - Aumenta stock             │
-                                                            │ - Registra movimientos     │
-                                                            └────────────────────────────┘
-
-┌─────────────┐     Registra      ┌─────────────┐
-│  VETERINARIO │ ───────────────► │   STOCK      │
-│              │     consumo       │  (disminuye) │
-└─────────────┘                  └─────────────┘
-```
-
-### Entidades Principales
-
-| Entidad | Descripción |
-|---------|-------------|
-| **Insumo** | Catálogo de productos médicos (nombre, descripción, unidad, precio, stock mínimo) |
-| **StockInsumo** | Stock actual de cada insumo |
-| **MovimientoInsumo** | Historial de entradas y salidas (con cantidad, precio, fecha, descripción) |
-| **SolicitudReposicion** | Solicitud del veterinario para reponer insumos |
-| **DetalleSolicitud** | Ítems solicitados (insumo + cantidad) |
-| **OrdenCompra** | Orden de compra al proveedor |
-| **DetalleOrdenCompra** | Ítems de la orden (con precio real acordado) |
-| **Proveedor** | Datos del proveedor (nombre, email, teléfono) |
-
-### Estados
-
-| Entidad | Estados |
-|---------|---------|
-| **SolicitudReposicion** | `PENDIENTE` → `APROBADA` o `CANCELADA` |
-| **OrdenCompra** | `PENDIENTE` → `COMPLETADA` o `CANCELADA` |
-| **MovimientoInsumo** | `ENTRADA` (compra) o `SALIDA` (consumo) |
-
-### Lógica de Negocio
-
-1. **Crear Insumo (ADMIN):** Al crear un insumo, automáticamente se crea un registro de stock en 0.
-
-2. **Solicitar Reposición (VET):** El veterinario crea una solicitud con los insumos y cantidades necesitadas (sin especificar precio).
-
-3. **Aprobar Solicitud (ADMIN):** El admin selecciona un proveedor y se genera automáticamente una `OrdenCompra` en estado `PENDIENTE`.
-
-4. **Completar Orden (ADMIN):** Cuando llega la mercadería:
-   - El admin puede ajustar los precios reales (que pueden diferir de los estimados)
-   - El precio del insumo se actualiza con el precio real
-   - El stock aumenta según las cantidades recibidas
-   - Se registran los movimientos de entrada
-
-5. **Registrar Consumo (VET):** El veterinario registra cuando usa insumos en una consulta:
-   - El stock disminuye
-   - Se registra el movimiento de salida
-
-### Alertas de Stock
-
-El endpoint de stock incluye un campo `alertaStock` que indica `true` cuando `cantidadActual <= stockMinimo`, permitiendo mostrar alertas en el frontend.
-
----
-
-## 🚀 Inicio Rápido
-
-### Requisitos
-
-- Java 21+
-- Maven 3.8+
-- PostgreSQL 15+
-- Docker (opcional)
-
-### Configuración
-
-1. **Variables de entorno:**
-```bash
-export JWT_SECRET=PETSHOP_SECRET_KEY_256_BITS_MIN_FOR_HS256_ALGORITHM_2026
-export CLOUDINARY_CLOUD_NAME=your_cloud_name
-export CLOUDINARY_API_KEY=your_api_key
-export CLOUDINARY_API_SECRET=your_api_secret
-```
-
-2. **Base de datos PostgreSQL:**
-```bash
-# Usando Docker
-docker run -d \
-  --name petshop_db \
-  -e POSTGRES_DB=petshop_ecommerce \
-  -e POSTGRES_USER=petshop_admin \
-  -e POSTGRES_PASSWORD=petshop_secure_pass \
-  -p 5432:5432 \
-  postgres:15
-```
-
-3. **Ejecutar la aplicación:**
-```bash
-./mvnw spring-boot:run
-```
-
----
-
-## 👤 Usuarios de Prueba (Seeds)
-
-Al iniciar la aplicación, se crean automáticamente los siguientes usuarios:
-
-| Email | Password | Rol |
-|-------|----------|-----|
-| `admin@petshop.com` | `12345678` | ADMIN |
-| `doctor@petshop.com` | `12345678` | VETERINARIO |
-| `cliente@petshop.com` | `12345678` | CLIENTE |
-
-> **Nota:** El usuario CLIENTE tiene 2 mascotas de prueba (Max - Perro, Nube - Gato)
-
----
-
-## 📚 Endpoints API
-
-### Autenticación
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/auth/register` | Registro de usuario | No |
-| POST | `/auth/login` | Inicio de sesión | No |
-
-### Productos (E-Commerce)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/productos` | Listar productos | No |
-| GET | `/productos/{id}` | Obtener producto | No |
-| POST | `/productos` | Crear producto | ADMIN |
-| PUT | `/productos/{id}` | Actualizar producto | ADMIN |
-| DELETE | `/productos/{id}` | Eliminar producto | ADMIN |
-
-### Categorías
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/categorias` | Listar categorías | No |
-
-### Compras
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/compras` | Historial de compras del usuario autenticado | CLIENTE |
-| GET | `/compras/usuario/{usuarioId}` | Historial de compras de un usuario específico | ADMIN |
-| POST | `/compras` | Crear compra | CLIENTE |
-| PUT | `/compras/{id}/estado?estado=` | Cambiar estado | ADMIN |
-
-### Gestión de Insumos (Vet-Stock)
-
-#### Insumos (ADMIN)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/insumos` | Listar insumos | ADMIN |
-| GET | `/insumos/{id}` | Obtener insumo | ADMIN |
-| POST | `/insumos` | Crear insumo | ADMIN |
-| PUT | `/insumos/{id}` | Actualizar insumo | ADMIN |
-| DELETE | `/insumos/{id}` | Eliminar insumo | ADMIN |
-
-#### Stock (VET, ADMIN)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/insumos/stock` | Ver stock de todos los insumos | VET, ADMIN |
-| GET | `/insumos/stock/{id}` | Ver stock de un insumo | VET, ADMIN |
-| GET | `/insumos/stock/{id}/historial` | Ver historial de movimientos | VET, ADMIN |
-| GET | `/insumos/stock/disponibles` | Stock para mostrar en frontend | No |
-
-#### Solicitudes de Reposición
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/solicitudes` | Mis solicitudes | VET |
-| GET | `/solicitudes/todas` | Todas las solicitudes | ADMIN |
-| GET | `/solicitudes/{id}` | Ver solicitud | VET, ADMIN |
-| GET | `/solicitudes/veterinario/{id}` | Solicitudes de un veterinario | ADMIN |
-| POST | `/solicitudes` | Crear solicitud | VET |
-| PUT | `/solicitudes/{id}/aprobar?proveedorId=` | Aprobar y generar orden | ADMIN |
-| PUT | `/solicitudes/{id}/cancelar` | Cancelar solicitud | ADMIN |
-
-#### Órdenes de Compra (ADMIN)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/ordenes-compra` | Listar órdenes | ADMIN |
-| GET | `/ordenes-compra/{id}` | Ver orden | ADMIN |
-| **POST** | **`/ordenes-compra`** | **Crear orden de compra** | **ADMIN** |
-| PUT | `/ordenes-compra/{id}/completar` | Completar orden (recibe mercadería) | ADMIN |
-| PUT | `/ordenes-compra/{id}/cancelar` | Cancelar orden | ADMIN |
-
-#### Proveedores (ADMIN)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/proveedores` | Listar proveedores | ADMIN |
-| GET | `/proveedores/{id}` | Ver proveedor | ADMIN |
-| POST | `/proveedores` | Crear proveedor | ADMIN |
-| PUT | `/proveedores/{id}` | Actualizar proveedor | ADMIN |
-| DELETE | `/proveedores/{id}` | Eliminar proveedor | ADMIN |
-
-#### Consumo de Insumos (VET)
-
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/insumos/consumo` | Registrar consumo de insumos | VET |
-
-### Ejemplo: Crear Solicitud de Reposición
-
-```json
-POST /solicitudes
-{
-  "detalles": [
-    { "insumoId": 1, "cantidadSolicitada": 50 },
-    { "insumoId": 3, "cantidadSolicitada": 20 }
-  ]
-}
-```
-
-### Ejemplo: Aprobar Solicitud
-
-```
-PUT /solicitudes/1/aprobar?proveedorId=1
-```
-
-### Ejemplo: Crear Orden de Compra directamente
-
-```json
-POST /ordenes-compra
-{
-  "proveedorId": 1,
-  "items": [
-    { "insumoId": 1, "cantidad": 50 },
-    { "insumoId": 3, "cantidad": 30 }
-  ]
-}
-```
-
-> **Nota:** La orden se crea en estado `PENDIENTE` con precios en cero. Al completarla se actualizan precios reales y stock.
-
-### Ejemplo: Completar Orden (con precios reales)
-
-```json
-PUT /ordenes-compra/1/completar
-{
-  "items": [
-    { "insumoId": 1, "cantidad": 50, "precioUnitario": 22.00 },
-    { "insumoId": 3, "cantidad": 20, "precioUnitario": 28.50 }
-  ]
-}
-```
-
-### Ejemplo: Registrar Consumo
-
-```json
-POST /insumos/consumo
-{
-  "items": [
-    { "insumoId": 1, "cantidad": 2 }
-  ],
-  "descripcion": "Consulta de revisión general - Luna"
-}
-```
-
----
-
-## 📊 Modelo de Datos (E-Commerce)
-
-```mermaid
-erDiagram
-    USUARIO {
-        Long id PK
-        string nombre
-        string email
-        string contrasena
-        string direccion
-        string telefono
-        string avatar
-    }
-    ROL {
-        Long id PK
-        string nombre
-    }
-    PRODUCTO {
-        Long id PK
-        Long fk_categoria FK
-        string nombre
-        string codigo
-        string descripcion
-        decimal precio
-        int stock
-        string unidad_medida
-        boolean activo
-    }
-    CATEGORIA {
-        Long id PK
-        string nombre
-    }
-    COMPRA {
-        Long id PK
-        Long fk_usuario FK
-        datetime fecha
-        decimal total
-        string estado
-    }
-    DETALLE_COMPRA {
-        Long id PK
-        Long fk_compra FK
-        Long fk_producto FK
-        int cantidad
-        decimal precioUnitario
-    }
-
     USUARIO ||--o{ COMPRA : realiza
-    USUARIO }o--|| ROL : tiene
-    PRODUCTO }o--|| CATEGORIA : clasifica
-    COMPRA ||--o{ DETALLE_COMPRA : contiene
-    DETALLE_COMPRA }o--|| PRODUCTO : referencia
-```
-
-## 📊 Modelo de Datos (Gestión Veterinaria)
-
-```mermaid
-erDiagram
-    USUARIO {
-        Long id PK
-        string nombre
-        string email
-    }
-    ROL {
-        Long id PK
-        string nombre
-    }
-    PROVEEDOR {
-        Long id PK
-        string nombre
-        string email
-        string telefono
-    }
-    INSUMO {
-        Long id PK
-        string nombre
-        string descripcion
-        string unidad_medida
-        decimal precio_unitario
-        int stock_minimo
-    }
-    STOCK_INSUMO {
-        Long id PK
-        Long fk_insumo FK
-        int cantidad_actual
-    }
-    SOLICITUD_REPOSICION {
-        Long id PK
-        Long fk_veterinario FK
-        string estado
-        datetime fecha
-    }
-    DETALLE_SOLICITUD {
-        Long id PK
-        Long fk_insumo FK
-        Long fk_solicitud FK
-        int cantidad_solicitada
-    }
-    ORDEN_COMPRA {
-        Long id PK
-        Long fk_proveedor FK
-        string estado
-        datetime fecha
-    }
-    DETALLE_ORDEN_COMPRA {
-        Long id PK
-        Long fk_insumo FK
-        Long fk_orden FK
-        int cantidad
-        decimal precio_unitario
-    }
-    MOVIMIENTO_INSUMO {
-        Long id PK
-        Long fk_insumo FK
-        string tipo
-        int cantidad
-        decimal precio_unitario
-        datetime fecha
-        string descripcion
-        Long referencia_id
-    }
-    VETERINARIO {
-        Long id PK
-        Long usuario_id FK
-        string matricula
-        string especialidad
-        string bio
-        boolean activo
-    }
-    HORARIO_ATENCION {
-        Long id PK
-        Long veterinario_id FK
-        int dia_semana
-        time hora_inicio
-        time hora_fin
-        boolean trabaja
-    }
-    BLOQUEO_FECHA {
-        Long id PK
-        Long veterinario_id FK
-        date fecha_inicio
-        date fecha_fin
-        string motivo
-    }
-    SERVICIO {
-        Long id PK
-        string nombre
-        string descripcion
-        decimal precio
-    }
-    CITA {
-        Long id PK
-        Long fk_mascota FK
-        Long fk_veterinario FK
-        Long fk_servicio FK
-        datetime fecha_hora
-        int duracion_min
-        string estado
-    }
-    SERVICIO_VETERINARIO {
-        Long fk_servicio FK
-        Long fk_veterinario FK
-    }
-
-    USUARIO }o--|| ROL : tiene
-    USUARIO ||--|| VETERINARIO : es
-    USUARIO ||--o{ SOLICITUD_REPOSICION : solicita
+    USUARIO }o--o{ ROL : tiene
+    USUARIO ||--|| VETERINARIO : "es (1:1)"
     VETERINARIO ||--o{ HORARIO_ATENCION : tiene
     VETERINARIO ||--o{ BLOQUEO_FECHA : tiene
     VETERINARIO }o--o{ SERVICIO : ofrece
-    CITA }o--|| VETERINARIO : agendada_con
+    VETERINARIO ||--o{ CONSULTA : realiza
+    VETERINARIO ||--o{ CITA : atiende
+    VETERINARIO ||--o{ INTERNACION : atiende
+    VETERINARIO ||--o{ PRESCRIPCION : emite
+    VETERINARIO ||--o{ SOLICITUD_REPOSICION : solicita
+    MASCOTA ||--o{ CONSULTA : tiene
+    MASCOTA ||--o{ CITA : para
+    MASCOTA ||--o{ INTERNACION : hospitalizada
     CITA }o--|| SERVICIO : referencia
-    PROVEEDOR ||--o{ ORDEN_COMPRA : surte
-    INSUMO ||--|| STOCK_INSUMO : tiene
-    INSUMO ||--o{ DETALLE_SOLICITUD : referenced_by
-    SOLICITUD_REPOSICION ||--o{ DETALLE_SOLICITUD : contiene
+    CITA ||--o| CONSULTA : "se convierte en (1:1)"
+    CONSULTA ||--o| PRESCRIPCION : "tiene (1:1)"
+    CONSULTA ||--o{ ARCHIVO_CLINICO : adjunta
+    PRESCRIPCION ||--o{ DETALLE_PRESCRIPCION : contiene
+    INTERNACION ||--o{ EVOLUCION_INTERNACION : registra
+    PROVEEDOR ||--o{ ORDEN_COMPRA : recibe
     ORDEN_COMPRA ||--o{ DETALLE_ORDEN_COMPRA : contiene
-    DETALLE_ORDEN_COMPRA }o--|| INSUMO : referencia
-    INSUMO ||--o{ MOVIMIENTO_INSUMO : tiene
+    SOLICITUD_REPOSICION ||--o{ DETALLE_SOLICITUD : contiene
+    INSUMO ||--|| STOCK_INSUMO : tiene
+    INSUMO ||--o{ MOVIMIENTO_INSUMO : registra
+    INSUMO ||--o{ DETALLE_ORDEN_COMPRA : referencia
+    INSUMO ||--o{ DETALLE_SOLICITUD : referencia
+    INSUMO ||--o{ DETALLE_PRESCRIPCION : referencia
+    PRODUCTO }o--|| CATEGORIA : clasifica
+    PRODUCTO ||--o{ DETALLE_COMPRA : vendido_en
+    COMPRA ||--o{ DETALLE_COMPRA : contiene
+    USUARIO ||--o{ NOTIFICACION : recibe
 ```
+
+### Enums
+
+| Enum | Valores |
+|---|---|
+| `EstadoCompra` | `PENDIENTE`, `CONFIRMADO`, `ENTREGADO`, `CANCELADO` |
+| `EstadoCita` | `PENDIENTE`, `CONFIRMADA`, `EN_PROGRESO`, `COMPLETADA`, `CANCELADA`, `CANCELADA_POR_MEDICO`, `NO_ASISTIO` |
+| `EstadoInternacion` | `ACTIVA`, `ALTA`, `REINGRESO_SOLICITADO` |
+| `EstadoSolicitud` | `PENDIENTE`, `APROBADA`, `CANCELADA` |
+| `EstadoOrdenCompra` | `PENDIENTE`, `COMPLETADA`, `CANCELADA` |
+| `MetodoPago` | `TRANSFERENCIA`, `EFECTIVO`, `TARJETA` |
+| `TipoMovimiento` | `ENTRADA`, `SALIDA` |
+| `TipoNotificacion` | `SISTEMA`, `WHATSAPP`, `EMAIL` |
+| `UnidadMedida` | `G`, `KG`, `ML`, `L`, `UNIDAD` (con campo `simbolo`) |
+| `TipoCita` | ⚠️ **Deprecated**: existe en código pero no se usa en ninguna entidad (migrado a `Servicio` en V29). Conservar solo si se referencia desde algún endpoint legacy. |
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 src/main/java/com/team4/petstore/
-├── config/              # Configuraciones (Security, OpenAPI, Cloudinary, DataSeeder)
-├── controller/          # Controladores REST
+├── config/
+│   ├── CloudinaryConfig.java
+│   ├── DataSeederConfig.java
+│   ├── OpenApiConfig.java
+│   ├── SecurityConfig.java
+│   └── WebConfig.java
+├── controller/                     # 19 controllers
 │   ├── AuthController.java
 │   ├── CategoriaController.java
+│   ├── CitaController.java
 │   ├── CompraController.java
+│   ├── ConsultaController.java
 │   ├── ImageController.java
-│   ├── ProductoController.java
-│   ├── UsuarioController.java
+│   ├── InsumoController.java
+│   ├── InternacionController.java
 │   ├── MascotaController.java
 │   ├── MascotaHistorialController.java
-│   ├── ConsultaController.java
-│   ├── CitaController.java
-│   ├── InternacionController.java
-│   ├── InsumoController.java
-│   ├── StockInsumoController.java
-│   ├── SolicitudReposicionController.java
+│   ├── NotificacionController.java
 │   ├── OrdenCompraController.java
+│   ├── ProductoController.java
 │   ├── ProveedorController.java
 │   ├── ServicioController.java
-│   └── VeterinarioController.java       # Vet-Admin
+│   ├── SolicitudReposicionController.java
+│   ├── StockInsumoController.java
+│   ├── UsuarioController.java
+│   └── VeterinarioController.java
 ├── dto/
-│   ├── request/        # DTOs de entrada
-│   │   ├── VeterinarioRequest.java
-│   │   ├── VeterinarioCuentaRequest.java
-│   │   ├── VeterinarioPerfilRequest.java
-│   │   ├── HorarioRequest.java
+│   ├── request/                    # 27 DTOs de entrada
+│   │   ├── AltaRequest.java
 │   │   ├── BloqueoFechaRequest.java
 │   │   ├── CambiarEstadoRequest.java
 │   │   ├── CitaRequest.java
-│   │   └── ServicioRequest.java
-│   └── response/       # DTOs de salida
-│       ├── VeterinarioResponse.java
-│       ├── HorarioResponse.java
+│   │   ├── CompraRequest.java
+│   │   ├── ConsultaRequest.java
+│   │   ├── ConsumoRequest.java
+│   │   ├── DetallePrescripcionRequest.java
+│   │   ├── EstadoCitaRequest.java
+│   │   ├── EvolucionRequest.java
+│   │   ├── HorarioRequest.java
+│   │   ├── InsumoRequest.java
+│   │   ├── InternacionRequest.java
+│   │   ├── LoginRequest.java
+│   │   ├── MascotaRequest.java
+│   │   ├── OrdenCompraCompletarRequest.java
+│   │   ├── OrdenCompraRequest.java
+│   │   ├── PrescripcionRequest.java
+│   │   ├── ProductoRequest.java
+│   │   ├── ProveedorRequest.java
+│   │   ├── RegisterRequest.java
+│   │   ├── ReingresoRequest.java
+│   │   ├── ServicioRequest.java
+│   │   ├── SolicitudReposicionRequest.java
+│   │   ├── VeterinarioCuentaRequest.java
+│   │   ├── VeterinarioPerfilRequest.java        # ⚠️ No usado por controllers
+│   │   └── VeterinarioRequest.java
+│   └── response/                   # 22 DTOs de salida
+│       ├── ApiResponse.java
+│       ├── AuthResponse.java
 │       ├── BloqueoFechaResponse.java
 │       ├── CitaResponse.java
-│       └── ServicioResponse.java
-├── entity/             # Entidades JPA
-│   ├── Usuario.java, Rol.java, Producto.java
-│   ├── Categoria.java, Compra.java, DetalleCompra.java
-│   ├── Mascota.java, Consulta.java, Cita.java
-│   ├── Insumo.java, StockInsumo.java, MovimientoInsumo.java
-│   ├── SolicitudReposicion.java, DetalleSolicitud.java
-│   ├── OrdenCompra.java, DetalleOrdenCompra.java
-│   ├── Proveedor.java, Internacion.java, Prescripcion.java
-│   ├── Servicio.java                       # Catálogo comercial
-│   ├── Veterinario.java, HorarioAtencion.java, BloqueoFecha.java  # Vet-Admin
-│   └── enums: EstadoCompra, TipoMovimiento, EstadoSolicitud, EstadoCita, TipoCita, etc.
-├── exception/         # Excepciones personalizadas
-├── repository/         # Repositorios JPA
-│   ├── VeterinarioRepository.java
-│   ├── HorarioAtencionRepository.java   # Vet-Admin
-│   ├── BloqueoFechaRepository.java       # Vet-Admin
-│   └── ServicioRepository.java
-├── security/           # Filtros JWT y configuración de seguridad
-├── service/           # Lógica de negocio
-│   ├── VeterinarioService.java          # Vet-Admin
-│   ├── ServicioService.java
-│   └── CitaService.java                  # Valida veterinario.tieneServicio()
-└── event/             # Eventos de dominio (citas, evoluciones)
+│       ├── CompraResponse.java
+│       ├── ConsultaResponse.java
+│       ├── DetallePrescripcionResponse.java
+│       ├── EvolucionResponse.java
+│       ├── HorarioResponse.java
+│       ├── InsumoResponse.java
+│       ├── InternacionResponse.java
+│       ├── MascotaResponse.java
+│       ├── MovimientoInsumoResponse.java
+│       ├── NotificacionResponse.java
+│       ├── OrdenCompraResponse.java
+│       ├── PrescripcionResponse.java
+│       ├── ProductoResponse.java
+│       ├── ProveedorResponse.java
+│       ├── ServicioResponse.java
+│       ├── SolicitudReposicionResponse.java
+│       ├── StockInsumoResponse.java
+│       └── VeterinarioResponse.java
+├── entity/                         # 33 entidades + 9 enums
+│   ├── (entidades de dominio)
+│   └── enums/
+│       ├── EstadoCita.java
+│       ├── EstadoCompra.java
+│       ├── EstadoInternacion.java
+│       ├── EstadoOrdenCompra.java
+│       ├── EstadoSolicitud.java
+│       ├── MetodoPago.java
+│       ├── TipoCita.java                     # ⚠️ Deprecated
+│       ├── TipoMovimiento.java
+│       ├── TipoNotificacion.java
+│       └── UnidadMedida.java
+├── event/                          # ⚠️ Placeholder: 3 clases sin uso
+│   ├── CitaCompletadaEvent.java
+│   ├── CitaCreadaEvent.java
+│   └── EvolucionRegistradaEvent.java
+├── exception/
+│   └── GlobalExceptionHandler.java
+├── repository/                     # 21 repositorios
+│   └── *.java
+├── security/                       # 3 archivos
+│   ├── JwtAuthenticationFilter.java
+│   ├── JwtTokenProvider.java
+│   └── UserDetailsServiceImpl.java
+└── service/                        # 20 servicios
+    └── *.java
 ```
 
----
+### Reglas de Negocio Destacadas
 
-## 🛠️ Tecnologías
-
-| Tecnología | Versión |
-|------------|---------|
-| Spring Boot | 3.4.13 |
-| Java | 21 (LTS) |
-| Spring Security | JWT |
-| Spring Data JPA | - |
-| PostgreSQL | 15 |
-| Flyway | - |
-| Swagger/OpenAPI | 2.8.4 |
-| Cloudinary | cloudinary-http45 (HTTP API) |
+1. **Crear insumo (ADMIN):** crea automáticamente un `StockInsumo` en 0.
+2. **Aprobar solicitud (ADMIN):** genera automáticamente una `OrdenCompra` en `PENDIENTE`.
+3. **Completar orden (ADMIN):** actualiza precios reales del insumo, aumenta stock, registra movimientos de entrada.
+4. **Cancelar compra (ADMIN):** restaura stock automáticamente.
+5. **Crear cita:** valida que el veterinario ofrezca el `servicioId` solicitado.
+6. **Crear bloqueo de fecha:** rechaza fechas solapadas para el mismo veterinario.
+7. **Registro de cliente:** si se registran 3+ mascotas, `familyName` es obligatorio.
+8. **Alertas de stock:** `StockInsumoResponse.alertaStock = (cantidadActual <= stockMinimo)`.
 
 ---
 
-## 📖 Documentación API (Swagger)
+## Documentación API (Swagger)
 
-Una vez iniciada la aplicación:
+Una vez levantada la app:
 - **Swagger UI:** http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON:** http://localhost:8080/api-docs
+
+Incluye autenticación Bearer JWT — usar el botón "Authorize" con el token devuelto por `/auth/login`.
+
+---
+
+**Versión del documento:** 2.0 (alineado al código real del repo)
+**Rama actual:** `main`
